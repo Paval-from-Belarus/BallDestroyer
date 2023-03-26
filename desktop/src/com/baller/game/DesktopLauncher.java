@@ -1,5 +1,6 @@
 package com.baller.game;
 
+import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 
@@ -8,8 +9,10 @@ public class DesktopLauncher {
 	public static void main (String[] arg) {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
 		config.setForegroundFPS(60);
-		config.setTitle("ball-destroyer");
-		config.setWindowSizeLimits(800, 600, 800, 600);
-		new Lwjgl3Application(new Game(), config);
+	      config.setTitle("ball-destroyer");
+	      config.setWindowSizeLimits(640, 480, 1024, 768);
+	      new Lwjgl3Application(new Game(), config);
+
 	}
+
 }

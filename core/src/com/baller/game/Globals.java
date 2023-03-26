@@ -1,12 +1,13 @@
 package com.baller.game;
 
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 
 public class Globals {
     public enum Color {Red, Blue, Green};
-    public static Vector2 DEFAULT_BALL_POS = new Vector2(150f, 0f);
-    public static Vector2 DEFAULT_BALL_VELOCITY = new Vector2(-20f, 40f);
+    public static Vector2 DEFAULT_BALL_POS = new Vector2(150f, 30f);
+    public static Vector2 DEFAULT_BALL_VELOCITY = new Vector2(-60f, 120f);
     public static int BALL_SIZE = 50;
     public static Vector2 DEFAULT_TRAMPOLINE_VELOCITY = new Vector2(50f, 0f);
     public static Vector2 DEFAULT_TRAMPOLINE_POS= new Vector2(100f, 40f);
@@ -22,8 +23,8 @@ public class Globals {
     public static int TABLE_WIDTH = FIELD_WIDTH;
     public static int TABLE_HEIGHT = (int) (FIELD_HEIGHT * FIELD_RATIO);
     public static int RED_ZONE = FIELD_HEIGHT - TABLE_HEIGHT;
-    public static float WINDOW_WIDTH = 800f;
-    public static float WINDOW_HEIGHT = 600f;
+    public static float WINDOW_WIDTH = Gdx.graphics.getWidth();
+    public static float WINDOW_HEIGHT = Gdx.graphics.getHeight();
     public static float convertHeight(int height){
         return (float) WINDOW_HEIGHT / FIELD_HEIGHT * height;
     }
