@@ -13,9 +13,9 @@ import java.util.function.Consumer;
 
 public class Ball extends AnimatedObject {
 public static class Properties {
-      private final Point pos;
-      private final Vector2 velocity;
-
+      private Point pos;
+      private Vector2 velocity;
+      private Properties(){}
       private Properties(Ball owner) {
 	    this.pos = owner.virtualPos;
 	    this.velocity = owner.velocity;
@@ -32,8 +32,8 @@ Consumer<Sprite> animation;
 Ball(Texture texture) {
       super(texture);
       setSize(Globals.BALL_SIZE, Globals.BALL_SIZE);
-      this.pos = Globals.DEFAULT_BALL_POS;
-      this.velocity = Globals.DEFAULT_BALL_VELOCITY;
+      this.pos = Globals.DEFAULT_BALL_POS.cpy();
+      this.velocity = Globals.DEFAULT_BALL_VELOCITY.cpy();
       this.setCollider(new CircleCollider(Math.max(width >> 1, height >> 1), virtualPos));
       update(0f);
 }

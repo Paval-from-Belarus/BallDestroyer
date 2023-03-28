@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.*;
 import com.baller.game.field.GameField;
@@ -17,6 +18,7 @@ import com.baller.game.GameController.*;
 import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import com.baller.game.players.Players;
+import com.baller.game.serializer.Serializer;
 
 public class Game extends com.badlogic.gdx.Game {
 public enum Stage {GameProcess, Settings, MainMenu, GamePause}
@@ -42,13 +44,25 @@ public void create() {
       batch = new SpriteBatch();
       initController();
 }
+private void load(){
 
+}
+private void save(){
+
+}
 private void initField(float dt) {
       players = new Players();
+      var list = new Array<Player.Id>();
       var id = players.add("John");
+      list.add(id);
+      list.add(players.add("Ivan"));
+      list.add(players.add("Ignat"));
       field = new GameField(players.getAll());
+      //field.verifyAll(list.toArray(Player.Id.class), players::release);
+      new Serializer().fromFile("text.back", Serializer.SerializationMode.Text);
+      field.verify(id, players::release);
       field.setRatio(0.7f);
-      field.setTrampolineCnt(id, 1);
+      field.setTrampolineCnt(id, 3);
       field.rebuild();
       saveProgress(null);
       renderHandler = this::dispatchField;
@@ -72,24 +86,28 @@ public Supplier<Boolean> guardRuler(Supplier<Boolean> handle) {
 }
 
 private void saveProgress(Object handle) {
-      GameField.Properties field = this.field.getProperties();
-      Player.Properties[] properties = players.getAll();
       Serializer serializer = new Serializer();
+      Thread executor;
       try {
-	    serializer.setPlayers(players);
-      } catch (NoSuchFieldException | IllegalAccessException e) {
+	    serializer
+		.setPlayers(players)
+		.setGameField(field);
+	    Runnable task = () -> {
+		  serializer.toFile("json.back", Serializer.SerializationMode.Json);
+		  serializer.toFile("text.back", Serializer.SerializationMode.Text);
+	    };
+	    executor = new Thread(task);
+      } catch (Exception e) {
 	    System.out.println(e.getMessage());
 	    return;
       }
-      Runnable task = () -> {
-	    serializer.start("json.back", Serializer.SerializationMode.Json);
-	    serializer.start("text.back", Serializer.SerializationMode.Text);
-      };
-      Thread runnable = new Thread(task);
-      runnable.start();
-      controller.sendMessage(UserInterface.Message.Type.Process, null,
-	  guardRuler(runnable::isAlive)
-      );
+      executor.start();
+      controller
+	  .sendMessage(
+	      UserInterface.Message.Type.Process,
+	      null,
+	      guardRuler(executor::isAlive)
+	  );
 }
 
 private void pauseHandler(Object rawScreen) {
@@ -128,7 +146,6 @@ private void changeResolution(Object rawResolution) {
       Vector2 resolution = (Vector2) rawResolution;
       settings.setResolution(resolution.x, resolution.y);
 }
-
 private void dispatchPlayer(Player player) {
       Ball[] balls = player.getBalls();
       for (Ball ball : balls) {
@@ -138,7 +155,7 @@ private void dispatchPlayer(Player player) {
 }
 
 private void dispatchField(float dt) {
-      for (Player.Properties properties : players.getAll()) {
+      for (Player.Properties properties : players.getVerified()) {
 	    Optional<Player> player = players.get(properties.getId());
 	    player.ifPresent(this::dispatchPlayer);
       }
@@ -151,23 +168,20 @@ public void render() {
       ScreenUtils.clear(0.3f, 0.4f, 0.7f, 1f);
       viewport.apply();
       batch.setProjectionMatrix(viewport.getCamera().combined);
-      try {
-	    renderHandler.accept(Gdx.graphics.getDeltaTime());
-      }
-      catch (Exception e){
-	    dispose();
-      }
+      renderHandler.accept(Gdx.graphics.getDeltaTime());
       batch.begin();
       field.draw(batch);
       players.draw(batch);
       batch.end();
       super.render();
 }
+
 @Override
 public void dispose() {
       batch.dispose();
       field.dispose();
       players.removeAll();
       isActive.set(false);
+      Gdx.app.exit();
 }
 }

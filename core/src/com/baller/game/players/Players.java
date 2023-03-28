@@ -19,14 +19,16 @@ public Players() {
       playersMap = new HashMap<>();
       nextIndex = 0;
 }
-private Players(Player.Properties[] properties, Map<Player.Id, String> playersMap){
+
+private Players(Player.Properties[] properties, Map<Player.Id, String> playersMap) {
       nextIndex = properties.length;//tricky step
       this.playersMap = playersMap;
       this.players = new ArrayList<>();
-      for(var props: properties)
+      for (var props : properties)
 	    players.add(new Player(props));
 
 }
+
 public Player.Id add(String name) {
       Player.Id id = new Player.Id(nextIndex++);
       Player player = new Player(id);
@@ -37,8 +39,8 @@ public Player.Id add(String name) {
 
 public Optional<Player.Id> get(String name) {
       Player.Id id = null;
-      for(var entry : playersMap.entrySet()){
-	    if(entry.getValue().equals(name)){
+      for (var entry : playersMap.entrySet()) {
+	    if (entry.getValue().equals(name)) {
 		  id = entry.getKey();
 		  break;
 	    }
@@ -70,13 +72,25 @@ public void remove(Player.Id id) {
 	    players.remove(member);
       });
 }
-public @NotNull Player.Properties[] getAll() {
+
+private @NotNull Player[] getVerifiedPlayers() {
       return players.stream()
 		 .filter(player -> player.getState() == State.Alive)
+		 .toArray(Player[]::new);
+}
+
+public @NotNull Player.Properties[] getVerified() {
+      return Arrays.stream(getVerifiedPlayers())
+		 .map(Player::getProperties)
+		 .toArray(Player.Properties[]::new);
+
+}
+
+public @NotNull Player.Properties[] getAll() {
+      return players.stream()
 		 .map(Player::getProperties)
 		 .toArray(Player.Properties[]::new);
 }
-
 public void removeAll() {
       players.forEach(Player::dispose);
       players.clear();
@@ -87,6 +101,7 @@ public void draw(SpriteBatch batch) {
 }
 
 public void update(float dt) {
-      players.forEach(player -> player.update(dt));
+      Arrays.stream(getVerifiedPlayers())
+	  .forEach(player -> player.update(dt));
 }
 }

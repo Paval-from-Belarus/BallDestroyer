@@ -1,4 +1,4 @@
-package com.baller.game;
+package com.baller.game.serializer;
 
 import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
@@ -13,6 +13,9 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Serializer {
 
@@ -24,7 +27,6 @@ public Player.Properties[] players;
 public Map<Integer, String> nameMapper;
 public String configPath;
 
-
 private void setPlayersProps(Players players) throws NoSuchFieldException, IllegalAccessException {
       Player.Properties[] properties = players.getAll();
       for (var props : properties) {
@@ -34,18 +36,20 @@ private void setPlayersProps(Players players) throws NoSuchFieldException, Illeg
 	    var balls = Arrays.stream(player.get().getBalls())
 			    .map(Ball::getProperties)
 			    .toArray(Ball.Properties[]::new);
-	    Class propsClass = props.getClass();
+	    var propsClass = props.getClass();
 	    Field plBalls = propsClass.getDeclaredField("balls");
 	    plBalls.setAccessible(true);
 	    plBalls.set(props, balls);
       }
       this.players = properties;
 }
+
+@SuppressWarnings("unchecked")
 private void setPlayerMapper(Players players) throws NoSuchFieldException, IllegalAccessException {
-      Class playersClass = players.getClass();
+      var playersClass = players.getClass();
       Field map = playersClass.getDeclaredField("playersMap");
       map.setAccessible(true);
-      Map<Player.Id, String> realMap = (Map<Player.Id, String>) map.get(players);
+      var realMap = (Map<Player.Id, String>) map.get(players);
       this.nameMapper = new HashMap<>();
       for(var entry : realMap.entrySet()){
 	    var playerId = entry.getKey();
@@ -61,7 +65,7 @@ public Serializer setPlayers(Players players) throws NoSuchFieldException, Illeg
       return this;
 }
 public Serializer setGameField(GameField field){
-
+      this.field  = field.getProperties();
       return this;
 }
 public Serializer() {}
@@ -80,15 +84,31 @@ private void saveAsJson(Path destPath) throws IOException {
       Files.writeString(destPath, text);
 }
 
-private void saveAsText(Path destPath) {
+private void saveAsText(Path destPath) throws IOException {
+	TextSerializer text = new TextSerializer();
+	String content = text.toText(this);
+	Files.writeString(destPath, content);
+}
 
+public boolean fromFile(@NotNull String sourceName, @NotNull SerializationMode mode){
+      Path path = Path.of(sourceName);
+      boolean response = true;
+      try {
+	    String content = Files.readString(path);
+	    TextSerializer text = new TextSerializer();
+	    Serializer father = text.fromText(content);
+      } catch(Exception e){
+	    response = false;
+      }
+      return response;
+      //Executors.newFixedThreadPool(1);
 }
 
 /**
  * @param destName to use default backup name
  *                 pass null as parameter
  */
-public boolean start(@Nullable String destName, @NotNull SerializationMode mode) {
+public boolean toFile(@Nullable String destName, @NotNull SerializationMode mode) {
       if (destName == null)
 	    destName = DEFAULT_NAME;
       Path path = Path.of(destName);
@@ -102,7 +122,5 @@ public boolean start(@Nullable String destName, @NotNull SerializationMode mode)
 	    return false;
       }
       return true;
-
-
 }
 }

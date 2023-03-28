@@ -12,8 +12,6 @@ static {
 
 public enum Axis {Horizontal, Vertical}
 
-;
-
 public enum VelocityLevel {Low, Medium, High}
 
 protected Vector2 pos;
@@ -23,6 +21,7 @@ protected float velocityPlain;
 protected AnimatedObject(Texture texture) {
       super(texture);
       velocity = new Vector2(); //no velocity
+      pos = new Vector2();
 }
 
 public void rotate(float angle) {
@@ -48,7 +47,12 @@ public void reflect(Axis axis) {
 	    case Vertical -> this.velocity.x *= -1f;
       }
 }
-
+@Override
+public void setPos(int x, int y){
+      pos.x = Globals.convertWidth(x);
+      pos.y = Globals.convertHeight(y);
+      super.setPos(x, y);
+}
 public void update(float dt) {
       Vector2 diff = velocity.cpy();
       pos = pos.add(diff.scl(dt));

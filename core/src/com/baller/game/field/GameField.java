@@ -14,17 +14,18 @@ import java.util.function.Consumer;
 import com.baller.game.DisplayObject.*;
 import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
+import org.jetbrains.annotations.NotNull;
 
 import static com.baller.game.Globals.*;
 
 public class GameField {
 public static class Properties {
-      private final float ratio;
-      private final int playerCnt;
-      private final int trampolineCnt;
+      private float ratio;
+      private int playerCnt;
+      private int trampolineCnt;
       //used for all players
-      private final BrickBlock.Type[] blocks;
-
+      private BrickBlock.Type[] blocks;
+      private Properties(){}
       private Properties(GameField field) {
 	    ratio = FIELD_RATIO;
 	    playerCnt = field.playerCnt;
@@ -111,7 +112,7 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 		  player.reflect(AnimatedObject.Axis.Horizontal);
 	    }
 	    case Movement -> {
-		  System.out.println("Hello ball!");
+	//	  System.out.println("Hello ball!");
 	    }
       }
 }
@@ -147,14 +148,23 @@ private final Texture textTrampoline;
 }
 
 public GameField(Player.Properties[] properties) {
-      if (properties.length > 1)
+      if (properties.length == 0)
 	    throw new IllegalStateException("This function is not implemented");
       initTrampolines(properties[0].getTrampolineCnt());
       playerCnt = properties.length;
       rebuild();
 }
+public void verifyAll(@NotNull Player.Id[] players, @NotNull Consumer<Player.Id> callback){
+      if(players.length == 0)
+	    return;
+      Player.Id id = players[0];
+      callback.accept(id);
+}
+public void verify(@NotNull Player.Id player, @NotNull Consumer<Player.Id> callback){
+      callback.accept(player);
+}
 
-public GameField(GameField.Properties properties) {
+private GameField(GameField.Properties properties) {
       properties.setField(this);
       rebuild();
 }
@@ -208,7 +218,6 @@ public void draw(SpriteBatch batch) {
 public void setTrampolineCnt(Player.Id id, int trampolineCnt) {
       initTrampolines(trampolineCnt);
 }
-
 public Message getMessage(Ball ball) {
       Message msg = new Message(Event.Movement);
       if (restBlockCnt == 0) {

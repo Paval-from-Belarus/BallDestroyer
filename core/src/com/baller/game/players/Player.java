@@ -2,6 +2,7 @@ package com.baller.game.players;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.baller.game.AnimatedObject;
 import com.baller.game.field.BrickBlock;
 import com.baller.game.field.GameField;
 import com.baller.game.DisplayObject.*;
@@ -9,11 +10,12 @@ import java.util.ArrayList;
 
 public class Player {
 public static class Properties {
-      final private int trampolineCnt;
-      final private Player.Id id;// each player cannot exists without id
-      final private int score;
+      private int trampolineCnt;
+      private Player.Id id;// each player cannot exists without id
+      private int score;
       private Ball.Properties[] balls;//used for serialization
       				      //not set by default
+      private Properties(){}
       private Properties(Player owner) {
 	    id = owner.id;
 	    trampolineCnt = owner.trampolineCnt;
@@ -72,7 +74,7 @@ private Player.State state;
 
 {
       textBall = new Texture("badlogic.jpg");
-      state = State.Alive;
+      state = State.Blocked;
       trampolineCnt = DEFAULT_TRAMPOLINE_CNT;
       score = DEFAULT_SCORE;
 }
@@ -82,8 +84,10 @@ Player(Player.Properties properties){
 }
 Player(Player.Id id) {
       this.id = id;
-      balls = new ArrayList<>(1);
+      balls = new ArrayList<>(2);
       balls.add(new Ball(textBall));
+      balls.add(new Ball(textBall));
+      balls.get(1).reflect(AnimatedObject.Axis.Vertical);
 }
 
 public Player.Id getId() {
@@ -106,9 +110,10 @@ public void draw(SpriteBatch batch) {
       if (state == State.Blocked)
 	    return;
       //score.draw();
-      for (Ball ball : balls)
+      for (Ball ball : balls){
+	    System.out.println(ball.getPos());
 	    ball.draw(batch);
-      System.out.println(score);
+      }
 }
 
 public void update(float dt) {
@@ -144,7 +149,9 @@ public void dispatch(GameField.Message msg, Ball ball) {
       }
       GameField.DefaultDispatcher(msg, ball);
 }
-
+public boolean isActive(){
+      return this.state == State.Alive;
+}
 public Properties getProperties() {
       return new Properties(this);
 }
