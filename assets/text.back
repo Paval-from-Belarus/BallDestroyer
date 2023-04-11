@@ -1,12 +1,10 @@
-#Field properties
-Ratio=0.7
-PlayerCnt=3
-TrampolineCnt=3
-Blocks=[Plain, Plain, Plain, Plain, Plain, Plain, Killer, Killer, Killer, Killer, Killer, Killer, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Killer, Killer, Killer, Killer, Killer, Killer]
+#Field's properties
+Ratio=0.700
+Blocks=[HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, Plain, Plain, Plain, Plain, Plain, Plain, DamageBonus, DamageBonus, DamageBonus, DamageBonus, DamageBonus, DamageBonus, Killer, Killer, Killer, Killer, Killer, Killer, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus]
 
 #Players' properties
 ##Name mapping
-Ваня=>0
+John=>0
 Ivan=>1
 Ignat=>2
 
@@ -14,40 +12,22 @@ Ignat=>2
 ###Player
 Id=0
 Score=0
-Trampolines=1
-###Balls
-Pos=(x=175,y=55)
-Velocity=(-60.0,120.0)
-Radius=25.0
-Pos=(x=175,y=55)
-Velocity=(60.0,120.0)
-Radius=25.0
-
+TrampolineCnt=1
+Balls[{Pos=(x=169,y=65),Velocity=(-60.0,120.0),Radius=25.000}, {Pos=(x=181,y=67),Velocity=(60.0,120.0),Radius=25.000}]
 ###Player
 Id=1
 Score=0
-Trampolines=1
-###Balls
-Pos=(x=175,y=55)
-Velocity=(-60.0,120.0)
-Radius=25.0
-Pos=(x=175,y=55)
-Velocity=(60.0,120.0)
-Radius=25.0
-
+TrampolineCnt=1
+Balls[{Pos=(x=175,y=55),Velocity=(-60.0,120.0),Radius=25.000}, {Pos=(x=175,y=55),Velocity=(60.0,120.0),Radius=25.000}]
 ###Player
 Id=2
 Score=0
-Trampolines=1
-###Balls
-Pos=(x=175,y=55)
-Velocity=(-60.0,120.0)
-Radius=25.0
-Pos=(x=175,y=55)
-Velocity=(60.0,120.0)
-Radius=25.0
+TrampolineCnt=1
+Balls[{Pos=(x=175,y=55),Velocity=(-60.0,120.0),Radius=25.000}, {Pos=(x=175,y=55),Velocity=(60.0,120.0),Radius=25.000}]
 
-##Settings
+#Settings
 Resolution=(640.0, 480.0)
 Hardness=0
 SoundLevel=0.3
+SkinName=null
+

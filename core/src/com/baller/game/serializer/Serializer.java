@@ -21,7 +21,7 @@ public class Serializer {
 public enum SerializationMode {Json, Text}
 
 public static final String DEFAULT_NAME = "game.back";
-public  GameField.Properties field;
+public GameField.Properties field;
 public Player.Properties[] players;
 public Map<Integer, String> nameMapper;
 public Settings.Properties settings;
@@ -43,6 +43,7 @@ private void setPlayersProps(Players players) throws NoSuchFieldException, Illeg
       }
       this.players = properties;
 }
+
 @SuppressWarnings("unchecked")
 private void setPlayerMapper(Players players) throws NoSuchFieldException, IllegalAccessException {
       var playersClass = players.getClass();
@@ -50,27 +51,31 @@ private void setPlayerMapper(Players players) throws NoSuchFieldException, Illeg
       map.setAccessible(true);
       var realMap = (Map<Player.Id, String>) map.get(players);
       this.nameMapper = new HashMap<>();
-      for(var entry : realMap.entrySet()){
+      for (var entry : realMap.entrySet()) {
 	    var playerId = entry.getKey();
 	    var playerIdClass = playerId.getClass();
 	    Field value = playerIdClass.getDeclaredField("value");
 	    value.setAccessible(true);
-	    nameMapper.put((Integer)value.get(playerId), entry.getValue());
+	    nameMapper.put((Integer) value.get(playerId), entry.getValue());
       }
 }
+
 public Serializer setPlayers(Players players) throws NoSuchFieldException, IllegalAccessException {
       setPlayersProps(players);
       setPlayerMapper(players);
       return this;
 }
-public Serializer setGameField(GameField field){
-      this.field  = field.getProperty();
+
+public Serializer setGameField(GameField field) {
+      this.field = field.getProperty();
       return this;
 }
-public Serializer setSettings(Settings settings){
+
+public Serializer setSettings(Settings settings) {
       this.settings = settings.serializer();
       return this;
 }
+
 public Serializer() {}
 
 public void addConfig(Path configPath) {
@@ -88,35 +93,39 @@ private void saveAsJson(Path destPath) throws IOException {
 }
 
 private void saveAsText(Path destPath) throws IOException {
-	TextSerializer text = new TextSerializer();
-	String content = text.toText(this);
-	Files.writeString(destPath, content);
+      TextSerializer text = new TextSerializer();
+      String content = text.toText(this);
+      Files.writeString(destPath, content);
 }
 
-public boolean fromFile(@NotNull String sourceName, @NotNull SerializationMode mode){
+private void applyCopy(Serializer father) {
+      this.nameMapper = father.nameMapper;
+      this.players = father.players;
+      this.field = father.field;
+      this.settings = father.settings;
+}
+
+public boolean fromFile(@NotNull String sourceName, @NotNull SerializationMode mode) {
       Path path = Path.of(sourceName);
       boolean response = true;
       try {
 	    String content = Files.readString(path);
-	    TextSerializer text = new TextSerializer();
 	    Serializer father;
-	    if(mode == SerializationMode.Json){
-		  Gson gson = new GsonBuilder()
-				  .setLenient()
-				  .disableHtmlEscaping()
-				  .setPrettyPrinting()
-				  .create();
+	    if (mode == SerializationMode.Json) {
 		  father = new Gson().fromJson(content, Serializer.class);
+	    } else {
+		  father = new TextSerializer().fromText(content);
 	    }
-	    else {
-		  father = text.fromText(content);
+	    if (father != null) {
+		  applyCopy(father);
+	    } else {
+		  response = false;
 	    }
-
-      } catch(Exception e){
+      } catch (Exception e) {
+	    e.printStackTrace();
 	    response = false;
       }
       return response;
-      //Executors.newFixedThreadPool(1);
 }
 
 /**

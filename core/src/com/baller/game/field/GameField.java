@@ -10,58 +10,62 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.baller.game.DisplayObject.*;
 import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
-import com.baller.game.serializer.Serializable;
+import com.baller.game.serializer.AbstractSerializable;
+import com.baller.game.serializer.TextSerializer;
 import org.jetbrains.annotations.NotNull;
 
 import static com.baller.game.Globals.*;
 
 public class GameField {
-public static class Properties implements Serializable<GameField> {
+public static class Properties extends AbstractSerializable<GameField> {
       private float ratio;
-      private int playerCnt;
-      private int trampolineCnt;
       private BrickBlock.Type[] blocks;
 
-      private Properties() {}
+      public Properties() {
+	    var patterns = List.of("Ratio=(.+)", "Blocks=\\[(.+)\\]");
+	    List<Consumer<String>> handlers = List.of(this::setRatio, this::setBlocks);
+	    addPatterns(patterns);
+	    addHandlers(handlers);
+	    setEmptyState(true);
+      }
 
       private Properties(GameField field) {
+	    this();
 	    ratio = FIELD_RATIO;
-	    playerCnt = field.playerCnt;
-	    trampolineCnt = field.trampolines.size();
 	    blocks = field.blockList.stream()
 			 .map(BrickBlock::getType)
 			 .toArray(BrickBlock.Type[]::new);
-      }
-
-      private void setField(GameField field) {
-	    field.setRatio(ratio);
-	    field.blockTypes = blocks;
-	    field.playerCnt = playerCnt;
-	    field.initTrampolines(trampolineCnt);
+	    setEmptyState(false);
       }
 
       @Override
       public String serialize() {
-	    return null;
-      }
-
-      @Override
-      public void deserialize(String serialized) {
-
-      }
-
-      @Override
-      public boolean isEmpty() {
-	    return false;
+	    return "Ratio=" + String.format("%.3f", ratio) + "\n" +
+		       "Blocks=" + Arrays.toString(blocks) + "\n";
       }
 
       @Override
       public GameField construct() {
-	    return null;
+	    GameField field = new GameField();
+	    field.setRatio(ratio);
+	    //todo: set blocks
+	    field.rebuild();
+	    return field;
+      }
+
+      private void setRatio(String source) {
+	    this.ratio = Float.parseFloat(source);
+      }
+      private void setBlocks(String source) {
+	    String[] items = source.split(", *");
+	    this.blocks = Arrays.stream(items)
+			      .map(BrickBlock.Type::valueOf)
+			      .toArray(BrickBlock.Type[]::new);
       }
 }
 
@@ -160,7 +164,7 @@ private int ceilHeight;
 private List<BrickBlock> blockList;
 private BrickBlock.Type[] blockTypes;
 private List<Trampoline> trampolines;
-private int playerCnt;
+private List<PlayerTrampolines> trampolineCounters;
 private final Texture textBlock;
 private final Texture textTrampoline;
 
@@ -169,14 +173,21 @@ private final Texture textTrampoline;
       textTrampoline = new Texture("block.png");
 }
 
+private GameField() {
+}
+
 public GameField(Player.Properties[] properties) {
       if (properties.length == 0)
 	    throw new IllegalStateException("This function is not implemented");
-      initTrampolines(properties[0].getTrampolineCnt());
-      playerCnt = properties.length;
+      var trampolines = Arrays.stream(properties)
+			    .map(player -> new PlayerTrampolines(player.getId(), player.getTrampolineCnt()))
+			  .collect(Collectors.toList());
+      initTrampolines(trampolines);
       rebuild();
 }
-
+public void addPlayers(Player.Properties[] properties){
+      //todo: add players
+}
 public void verifyAll(@NotNull Player.Id[] players, @NotNull Consumer<Player.Id> callback) {
       if (players.length == 0)
 	    return;
@@ -186,11 +197,6 @@ public void verifyAll(@NotNull Player.Id[] players, @NotNull Consumer<Player.Id>
 
 public void verify(@NotNull Player.Id player, @NotNull Consumer<Player.Id> callback) {
       callback.accept(player);
-}
-
-private GameField(GameField.Properties properties) {
-      properties.setField(this);
-      rebuild();
 }
 
 public void update(float dt) {
@@ -239,7 +245,9 @@ public void draw(final SpriteBatch batch) {
 }
 
 public void setTrampolineCnt(Player.Id id, int trampolineCnt) {
-      initTrampolines(trampolineCnt);
+      this.trampolineCounters.get(0).setTrampolineCnt(trampolineCnt);
+      initTrampolines(this.trampolineCounters);
+      //todo: implement this method
 }
 
 private List<DisplayObject> drawables;
@@ -273,7 +281,7 @@ public Message getMessage(Ball ball) {
 	    msg.setValue(lastHandle);
 	    return msg;
       }
-      checkCollides(ball);
+      //checkCollides(ball);
       if (isJumper(ball)) {
 	    msg.setEvent(Event.TrampolineCollision);
 	    msg.setValue(lastHandle);
@@ -287,7 +295,10 @@ public Message getMessage(Ball ball) {
 
 public static final int TRAMPOLINE_MIN_GAP = FIELD_WIDTH / 15;
 
-private void initTrampolines(int trampolineCnt) {
+private void initTrampolines(List<PlayerTrampolines> trampolineCounters) {
+      assert trampolineCounters.size() > 0;
+      this.trampolineCounters = trampolineCounters;
+      int trampolineCnt = trampolineCounters.get(0).getTrampolineCnt();
       final int maxCnt = FIELD_WIDTH / (Trampoline.DEFAULT_WIDTH + 2 * TRAMPOLINE_MIN_GAP);
       if (maxCnt < trampolineCnt)
 	    trampolineCnt = maxCnt;
@@ -298,7 +309,7 @@ private void initTrampolines(int trampolineCnt) {
 
 private void updateTrampolines() {
       if (this.trampolines == null)
-	    initTrampolines(DEFAULT_TRAMPOLINE_CNT);
+	    initTrampolines(trampolineCounters);
       assert trampolines.size() > 0;
       final int TR_HEIGHT = 30;
       final int pieceSize = FIELD_WIDTH / trampolines.size();

@@ -72,24 +72,10 @@ private void setPauseButton(){
             System.out.println(event.getTarget());
             return false;
       });
-//      pause.addListener(new ClickListener(){
-//            @Override
-//            public void clicked(InputEvent event, float x, float y) {
-//                  System.out.println("ADDED");
-//            }
-//
-//      });
       addActor(pause);
 }
 public void addPauseListener(ClickListener listener){
       pause.addListener(listener);
-}
-private ChangeListener getListener(BiConsumer<ChangeListener.ChangeEvent, Actor> handler){
-      return new ChangeListener() {@Override
-            public void changed(ChangeEvent event, Actor actor) {
-                  handler.accept(event, actor);
-            }
-      };
 }
 public void dispose(){
       background.dispose();

@@ -6,18 +6,30 @@ import com.badlogic.gdx.math.Vector2;
 import com.baller.game.AnimatedObject;
 import com.baller.game.CircleCollider;
 import com.baller.game.Globals;
+import com.baller.game.serializer.AbstractSerializable;
 
-import java.awt.*;
+import java.awt.Point;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class Ball extends AnimatedObject {
-public static class Properties {
+public static class Properties extends AbstractSerializable<Ball> {
       private Point pos;
       private Vector2 velocity;
       private float radius;
 
-      private Properties() {
+      public Properties() {
+	    List<String> patterns = List.of(
+		"Pos=\\((.+)\\)", "Velocity=\\((.+)\\)", "Radius=(.+)"
+	    );
+	    List<Consumer<String>> handlers = List.of(
+		this::setPos, this::setVelocity, this::setRadius
+	    );
+	    addHandlers(handlers);
+	    addPatterns(patterns);
       }
 
       private Properties(Ball owner) {
@@ -26,22 +38,57 @@ public static class Properties {
 	    this.radius = owner.getHeight() / 2f;
       }
 
-      private void restore(Ball owner) {
-	    owner.velocity = velocity;
-	    owner.setPos(pos.x, pos.y);
+      @Override
+      public String toString() {
+	    return "{Pos=" +
+		       "(x=" + this.pos.x + "," +
+		       "y=" + this.pos.y + ")," +
+		       "Velocity=" + this.velocity.toString() + "," +
+		       "Radius=" + String.format("%.3f", this.radius) + "}";
       }
 
       @Override
-      public String toString() {
-	    return "Pos=" +
-		       "(x=" + this.pos.x + "," +
-		       "y=" + this.pos.y + ")\n" +
-		       "Velocity=" + this.velocity.toString() + "\n" +
-		       "Radius=" + this.radius + "\n";
+      public String serialize() {
+	    return this.toString();
+      }
+
+      public Ball construct(Texture texture) {
+	    Ball ball = new Ball(texture);
+	    ball.velocity = velocity;
+	    ball.setPos(pos.x, pos.y);
+	    int diameter = (int) (radius * 2);
+	    ball.setSize(diameter, diameter);
+	    return ball;
+      }
+
+      public Ball construct() {
+	    throw new UnsupportedOperationException("Use method with texture");
+      }
+
+      private void setPos(String source) {
+	    Matcher matcher = Pattern.compile("(.+), *(.+) *").matcher(source);
+	    if (!matcher.find())
+		  throw new IllegalStateException("Incorrect source string");
+	    int x = Integer.parseInt(matcher.group(1));
+	    int y = Integer.parseInt(matcher.group(2));
+	    this.pos = new Point(x, y);
+      }
+
+      private void setVelocity(String source) {
+	    Matcher matcher = Pattern.compile("(.+), *(.+) *").matcher(source);
+	    if (!matcher.find())
+		  throw new IllegalStateException("Incorrect source string");
+	    float x = Float.parseFloat(matcher.group(1));
+	    float y = Float.parseFloat(matcher.group(2));
+	    this.velocity = new Vector2(x, y);
+      }
+
+      private void setRadius(String source) {
+	    this.radius = Float.parseFloat(source);
       }
 }
 
-Consumer<Sprite> animation;
+private Consumer<Sprite> animation;
 
 Ball(Texture texture) {
       super(texture);
@@ -50,10 +97,6 @@ Ball(Texture texture) {
       this.velocity = Globals.DEFAULT_BALL_VELOCITY.cpy();
       this.setCollider(new CircleCollider(Math.max(width >> 1, height >> 1), virtualPos));
       update(0f);
-}
-
-void restore(Ball.Properties properties) {
-      properties.restore(this);
 }
 
 public void freeze() {

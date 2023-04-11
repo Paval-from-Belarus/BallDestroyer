@@ -4,12 +4,16 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Null;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.*;
 import com.baller.game.GameController.Event;
 import com.baller.game.field.GameField;
 
 import java.awt.*;
+import java.io.File;
+import java.io.Serial;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -19,6 +23,7 @@ import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import com.baller.game.players.Players;
 import com.baller.game.serializer.Serializer;
+import org.jetbrains.annotations.Nullable;
 
 public class Game extends com.badlogic.gdx.Game {
 public enum Stage {GameProcess, Settings, MainMenu, GamePause}
@@ -45,9 +50,6 @@ public void create() {
       initController();
       initSettings();
 }
-private void load(){
-
-}
 private void initSettings(){
       settings = new Settings(Globals.FIELD_WIDTH, Globals.FIELD_HEIGHT);
       settings.setResolution(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -62,31 +64,30 @@ private void initField(float dt) {
       list.add(players.add("Ivan"));
       list.add(players.add("Ignat"));
       field = new GameField(players.getAll());
-      //field.verifyAll(list.toArray(Player.Id.class), players::release);
-      new Serializer().fromFile("json.back", Serializer.SerializationMode.Json);
       field.verify(id, players::release);
       field.setRatio(0.7f);
       field.setTrampolineCnt(id, 3);
       field.rebuild();
-      save(null);
       renderHandler = this::dispatchField;
+      settings.setSkin("White");
 }
 
-private void defaultRenderHandler(float dt) {
-}
-
-private void freezeField(float dt) {
-      renderHandler = this::defaultRenderHandler;
-      controller.addCallback(Event.OnScreenChange, this::pauseHandler);
-      controller.addCallback(Event.OnProgressSave, this::save);
-}
-
-public Supplier<Boolean> guardRuler(Supplier<Boolean> handle) {
-      return () -> {
-	    if (!this.isActive.get())
-		  return false;
-	    return handle.get();
-      };
+/**
+ * @return not empty Serializer if it exist
+ * At another way, return empty
+ * This convention is applicable for save method
+ * */
+private Optional<Serializer> load(){
+      File jsonBack = Settings.getJsonBackPath().toFile();
+      File txtBack = Settings.getTxtBackPath().toFile();
+      Serializer serializer = new Serializer();
+      if(txtBack.exists() && serializer.fromFile(txtBack.getAbsolutePath(), Serializer.SerializationMode.Text)){
+	    return Optional.of(serializer);
+      }
+      if(jsonBack.exists() && serializer.fromFile(jsonBack.getAbsolutePath(), Serializer.SerializationMode.Json)){
+	    return Optional.of(serializer);
+      }
+      return Optional.empty();
 }
 /**@param handle is any handle that will be skipped
  * */
@@ -116,6 +117,21 @@ private void save(Object handle) {
 	  );
 }
 
+private void defaultRenderHandler(float dt) {}
+
+private void freezeField(float dt) {
+      renderHandler = this::defaultRenderHandler;
+      controller.addCallback(Event.OnScreenChange, this::pauseHandler);
+      controller.addCallback(Event.OnProgressSave, this::save);
+}
+
+public Supplier<Boolean> guardRuler(Supplier<Boolean> handle) {
+      return () -> {
+	    if (!this.isActive.get())
+		  return false;
+	    return handle.get();
+      };
+}
 private void pauseHandler(Object rawScreen) {
       if (controller.getStage() != Stage.GamePause) {
 	    controller.removeCallback(Event.OnScreenChange, this::pauseHandler);

@@ -25,7 +25,7 @@ private Players(Player.Properties[] properties, Map<Player.Id, String> playersMa
       this.playersMap = playersMap;
       this.players = new ArrayList<>();
       for (var props : properties)
-	    players.add(new Player(props));
+	    players.add(props.construct());
 
 }
 

@@ -15,7 +15,10 @@ import com.baller.game.UserInterface.*;
 import javax.security.auth.callback.TextInputCallback;
 
 public class GameController {
-public enum Event {OnResolutionChange, OnScreenChange, OnProgressSave, OnProgramExit}
+/**<code>OnScreenChange</code> event corrupted when user change current menu. In this case, handle object
+ * is <code>UserInterface.ScreenType</code>
+ * */
+public enum Event {OnResolutionChange, OnScreenChange, OnProgressSave, OnSkinChange, OnProgramExit}
 
 private Game.Stage stage;
 private UserInterface ui;

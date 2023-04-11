@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.nio.file.OpenOption;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -17,41 +18,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TextSerializer {
-private String serializeField(GameField.Properties props) throws NoSuchFieldException, IllegalAccessException {
-      final String[] infoHeader = {"Ratio=", "PlayerCnt=", "TrampolineCnt=", "Blocks="};
-      StringBuilder strText = new StringBuilder();
-      strText.append("#Field properties\n");
-      var propsClass = props.getClass();
-      var list = List.of(
-	  propsClass.getDeclaredField("ratio"),
-	  propsClass.getDeclaredField("playerCnt"),
-	  propsClass.getDeclaredField("trampolineCnt"),
-	  propsClass.getDeclaredField("blocks"));
-      int index = 0;
-      for (Field field : list) {
-	    field.setAccessible(true);
-	    strText.append(infoHeader[index]);
-	    if (index == 3) {
-		  strText
-		      .append(Arrays.toString((BrickBlock.Type[]) field.get(props)));
-	    } else {
-		  strText
-		      .append(field.get(props));
-	    }
-	    strText.append("\n");
-	    index += 1;
-      }
-      return strText.append("\n").toString();
+private String serializeField(GameField.Properties props) {
+      return "#Field's properties\n" + props.serialize() + "\n";
 }
-
-private String serializeBalls(Ball.Properties[] properties) throws IllegalAccessException {
-      StringBuilder strBalls = new StringBuilder();
-      strBalls.append("###Balls").append("\n");
-      for (var props : properties)
-	    strBalls.append(props.toString());
-      return strBalls.toString();
-}
-
 private String serializePlayers(Player.Properties[] properties, Map<Integer, String> nameMapper) throws NoSuchFieldException, IllegalAccessException {
       StringBuilder strText = new StringBuilder();
       strText.append("#Players' properties\n");
@@ -64,26 +33,16 @@ private String serializePlayers(Player.Properties[] properties, Map<Integer, Str
       strText.append("\n");
       strText.append("##Players' configuration").append("\n");
       for (var props : properties) {
-	    var propsClass = props.getClass();
-	    Field ballsField = propsClass.getDeclaredField("balls");
-	    ballsField.setAccessible(true);
-	    Ball.Properties[] ballsProps = (Ball.Properties[]) ballsField.get(props);
-	    Player.Id id = props.getId();
-	    Field idValue = id.getClass().getDeclaredField("value");
-	    idValue.setAccessible(true);
-	    strText
-		.append("###Player").append("\n")
-		.append("Id=").append(idValue.get(id)).append("\n")
-		.append("Score=").append(props.getScore()).append("\n")
-		.append("Trampolines=").append(props.getTrampolineCnt()).append("\n")
-		.append(serializeBalls(ballsProps)).append("\n");
+	    strText.append("###Player\n");
+	    strText.append(props.serialize());
       }
+      strText.append("\n");
       return strText.toString();
 
 }
 
 private String serializeSettings(Settings.Properties props) {
-      return "##Settings\n" + props.serialize();
+      return "#Settings\n" + props.serialize() + "\n";
 }
 
 public String toText(Serializer source) {
@@ -120,18 +79,18 @@ private Object createInstance(Class<?> type) throws ReflectiveOperationException
       return instance.newInstance();
 }
 
-private @Nullable List<Object> fromString(String content, Function<String, ?> mapper) {
+public static @Nullable List<Object> arrayFromString(String content, Function<String, ?> mapper){
       String[] items = content.split(", *");
       return Arrays.stream(items)
 		 .map(mapper::apply)
 		 .collect(Collectors.toList());
 }
 
-private Map<Integer, String> getNameMapper(String source) throws ReflectiveOperationException {
+private Optional<Map<Integer, String>> getNameMapper(String source) {
       Pattern pattern = Pattern.compile("([a-zA-Z]+=>[0-9]+\n)");
       Matcher matcher = pattern.matcher(source);
-      if (!matcher.find() || matcher.groupCount() == 0)
-	    throw new IllegalStateException("Incorrect params");
+      if (!matcher.find())
+	    return Optional.empty();
       Map<Integer, String> nameMapper = new HashMap<>();
       for (int i = 1; i < matcher.groupCount(); i++) {
 	    String[] pieces = matcher.group(i).split("=>");
@@ -139,129 +98,69 @@ private Map<Integer, String> getNameMapper(String source) throws ReflectiveOpera
 	    String name = pieces[0];
 	    nameMapper.put(id, name);
       }
-      return nameMapper;
+      return Optional.of(nameMapper);
 }
 
-private Ball.Properties extractBall(String[] rawBall) {
-      final String[] patterns = {"Pos=\\(x="};
-
-      return null;
+private Optional<Player.Properties[]> getPlayers(String source) throws ReflectiveOperationException {
+	String[] items = source.split("##Players' configuration");
+	if(items.length < 2)
+	      return Optional.empty();
+	String[] players = items[1].split("###Player\n");
+	if(players.length < 2)
+	      return Optional.empty();
+	Player.Properties[] props = new Player.Properties[players.length - 1];
+	boolean allCompleted = true;
+	for(int i = 1; allCompleted &&  i < players.length; i++){
+	      props[i - 1] = new Player.Properties();
+	      props[i - 1].deserialize(players[i]);
+	      allCompleted = !props[i - 1].isEmpty();
+	}
+	if(!allCompleted)
+	      return Optional.empty();
+	return Optional.of(props);
 }
 
-private @Nullable Player.Properties extractPlayer(String rawPlayer) throws ReflectiveOperationException {
-      final String[] fields = {
-	  "id", "score", "trampolineCnt"
-      };
-      final String[] patterns = {
-	  "Id=([0-9]+)", "Score=([0-9]+)", "Trampolines=([0-9]+)"
-      };
-      String[] lines = rawPlayer.split("\n");
-      if (lines.length < 2)
-	    return null;
-      String line;
-      int index = 0;
-      var props = createInstance(Player.Properties.class);
-      while (!(line = lines[index + 1]).matches("###Balls")) {
-	    var rawField = getFirstGroup(line, patterns[index]);
-	    if (rawField.isEmpty())
-		  return null;
-	    Field field = props.getClass().getDeclaredField(fields[index]);
-	    field.setAccessible(true);
-	    if (index == 0) {
-		  var idGen = Player.Id.class.getDeclaredConstructor(int.class);
-		  idGen.setAccessible(true);
-		  field.set(props, idGen.newInstance(Integer.parseInt(rawField.get())));
-	    } else {
-		  Integer value = Integer.parseInt(rawField.get());
-		  field.set(props, value);
-	    }
-	    index += 1;
-      }
-      index += 2; //skip ### Balls and set to correct field
-      String[] ballLines = Arrays.copyOfRange(lines, index, lines.length);
-      var ballProps = extractBall(ballLines);
-      Field balls = props.getClass().getDeclaredField("balls");
-      balls.setAccessible(true);
-      balls.set(props, ballProps);
-      return (Player.Properties) props;
-}
-
-private Player.Properties[] getPlayers(String source) throws ReflectiveOperationException {
-      Pattern pattern = Pattern.compile("(###Player\n([^#]+\n)###Balls\n(.+\n)+\n)");
-      Matcher matcher = pattern.matcher(source);
-      if (!matcher.find() || matcher.groupCount() == 0)
-	    throw new IllegalStateException("Incorrect file");
-      List<Player.Properties> list = new ArrayList<>();
-      int offset = 0;
-      matcher.region(offset, source.length());
-      while (matcher.find() && matcher.group(1) != null) {
-	    String rawPlayer = matcher.group(1);
-	    offset = matcher.end();
-	    var props = extractPlayer(rawPlayer);
-	    if (props == null)
-		  throw new IllegalStateException("Incorrect file");
-	    list.add(props);
-	    matcher.region(offset, source.length());
-      }
-      return null;
-}
-
-private GameField.Properties getFieldProperties(String source) throws ReflectiveOperationException {
-      final List<String> patterns = List.of(
-	  "Ratio=([0-9]+(\\.[0-9]+))?",
-	  "PlayerCnt=([0-9]+)",
-	  "TrampolineCnt=([0-9]+)",
-	  "Blocks=\\[([a-zA-Z]+( *, *[a-zA-Z]+)*)]"
-      );
-      final List<String> fields = List.of(
-	  "ratio",
-	  "playerCnt",
-	  "trampolineCnt",
-	  "blocks"
-      );
-      GameField.Properties result =
-	  (GameField.Properties) createInstance(GameField.Properties.class);
-      int index = 0;
-      for (String pattern : patterns) {
-	    var first = getFirstGroup(source, pattern);
-	    if (first.isEmpty())
-		  throw new IllegalStateException("Incorrect props params");
-	    Field field = result.getClass().getDeclaredField(fields.get(index));
-	    field.setAccessible(true);
-	    switch (index) {
-		  case 0 -> field.set(result, Float.parseFloat(first.get()));
-		  case 1, 2 -> field.set(result, Integer.parseInt(first.get()));
-		  case 3 -> {
-			var items = fromString(first.get(), BrickBlock.Type::valueOf);
-			if (items == null)
-			      throw new IllegalStateException("Incorrect params");
-			field.set(result, items.toArray(new BrickBlock.Type[0]));//List<Object> to List<BrickBlock.Type>.toArray();
-		  }
-	    }
-	    index += 1;
-      }
+private Optional<GameField.Properties> getFieldProperties(String source) {
+      final Matcher matcher =
+	  Pattern.compile("#Field's properties\n(.+\n)+\n")
+	      .matcher(source);
+      if(!matcher.find())
+	    return Optional.empty();
+      Optional<GameField.Properties> result;
+      GameField.Properties props = new GameField.Properties();
+      props.deserialize(matcher.group(1));
+      if(props.isEmpty())
+	    result = Optional.empty();
+      else
+	    result = Optional.of(props);
       return result;
 }
 
-public @Nullable Settings.Properties getSettings(String content) {
-      Pattern pattern = Pattern.compile("###Settings\n(.|\n)+");
+public Optional<Settings.Properties> getSettings(String content) {
+      Pattern pattern = Pattern.compile("#Settings\n(.+\n)+\n");
       Matcher matcher = pattern.matcher(content);
-      if (!matcher.find() || matcher.groupCount() == 0) {
-	    return null;
+      if (!matcher.find()) {
+	    return Optional.empty();
       }
       Settings.Properties props = new Settings.Properties();
       props.deserialize(matcher.group(1));
-      if(props.isEmpty())
+      if (props.isEmpty())
 	    props = null;
-      return props;
+      return Optional.ofNullable(props);
 }
 
-public Serializer fromText(String content) throws ReflectiveOperationException {
+public @Nullable Serializer fromText(String content) throws ReflectiveOperationException {
       Serializer result = new Serializer();
-      result.field = getFieldProperties(content);
-      result.nameMapper = getNameMapper(content);
-      result.players = getPlayers(content);
-      result.settings = getSettings(content);
+      var field = getFieldProperties(content);
+      var mapper = getNameMapper(content);
+      var players = getPlayers(content);
+      var settings = getSettings(content);
+      if(field.isEmpty() || mapper.isEmpty() || players.isEmpty() || settings.isEmpty())
+	    return null;
+      result.field = field.get();
+      result.nameMapper = mapper.get();
+      result.players = players.get();
+      result.settings = settings.get();
       return result;
 }
 }

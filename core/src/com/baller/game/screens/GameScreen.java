@@ -17,8 +17,14 @@ private Stage stage;
 private ScoreBar bar;
 private SpriteBatch batch;
 private Queue<UserClick> messages;
+public Queue<UserClick> getMessage(){
+      var result = this.messages;
+      this.messages = new Queue<>();
+      return result;
+}
 
 public GameScreen(Skin skin, Viewport port) {
+      messages = new Queue<>();
       this.batch = new SpriteBatch();
       stage = new Stage(port, batch);
       bar = new ScoreBar(skin);
