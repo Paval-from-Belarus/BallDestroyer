@@ -14,18 +14,20 @@ import java.util.function.Consumer;
 import com.baller.game.DisplayObject.*;
 import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
+import com.baller.game.serializer.Serializable;
 import org.jetbrains.annotations.NotNull;
 
 import static com.baller.game.Globals.*;
 
 public class GameField {
-public static class Properties {
+public static class Properties implements Serializable<GameField> {
       private float ratio;
       private int playerCnt;
       private int trampolineCnt;
-      //used for all players
       private BrickBlock.Type[] blocks;
-      private Properties(){}
+
+      private Properties() {}
+
       private Properties(GameField field) {
 	    ratio = FIELD_RATIO;
 	    playerCnt = field.playerCnt;
@@ -40,6 +42,26 @@ public static class Properties {
 	    field.blockTypes = blocks;
 	    field.playerCnt = playerCnt;
 	    field.initTrampolines(trampolineCnt);
+      }
+
+      @Override
+      public String serialize() {
+	    return null;
+      }
+
+      @Override
+      public void deserialize(String serialized) {
+
+      }
+
+      @Override
+      public boolean isEmpty() {
+	    return false;
+      }
+
+      @Override
+      public GameField construct() {
+	    return null;
       }
 }
 
@@ -112,7 +134,7 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 		  player.reflect(AnimatedObject.Axis.Horizontal);
 	    }
 	    case Movement -> {
-	//	  System.out.println("Hello ball!");
+		  //	  System.out.println("Hello ball!");
 	    }
       }
 }
@@ -154,13 +176,15 @@ public GameField(Player.Properties[] properties) {
       playerCnt = properties.length;
       rebuild();
 }
-public void verifyAll(@NotNull Player.Id[] players, @NotNull Consumer<Player.Id> callback){
-      if(players.length == 0)
+
+public void verifyAll(@NotNull Player.Id[] players, @NotNull Consumer<Player.Id> callback) {
+      if (players.length == 0)
 	    return;
       Player.Id id = players[0];
       callback.accept(id);
 }
-public void verify(@NotNull Player.Id player, @NotNull Consumer<Player.Id> callback){
+
+public void verify(@NotNull Player.Id player, @NotNull Consumer<Player.Id> callback) {
       callback.accept(player);
 }
 
@@ -175,12 +199,12 @@ public void update(float dt) {
       for (index = 0; index < trampolines.size() && !isBlocked; index++) {
 	    isBlocked = isOutside(trampolines.get(index).collider());
       }
-      if (isBlocked){
+      if (isBlocked) {
 	    index -= 1;
 	    updateTrampoline(trampolines.get(index));
 	    isBlocked = isOutside(trampolines.get(index).collider());
       }
-      if(isBlocked)
+      if (isBlocked)
 	    return;
       for (int i = 0; i < trampolines.size(); i++) {
 	    if (i != index) {
@@ -210,14 +234,34 @@ private void updateTrampoline(Trampoline trampoline) {
       }
 }
 
-public void draw(SpriteBatch batch) {
-      trampolines.forEach(trampoline -> trampoline.draw(batch));
-      blockList.forEach(brick -> brick.draw(batch));
+public void draw(final SpriteBatch batch) {
+      drawables.forEach(item -> item.draw(batch));
 }
 
 public void setTrampolineCnt(Player.Id id, int trampolineCnt) {
       initTrampolines(trampolineCnt);
 }
+
+private List<DisplayObject> drawables;
+
+private void absorbAll() {
+      drawables = new ArrayList<>();
+      drawables.addAll(blockList);
+      drawables.addAll(trampolines);
+}
+
+public void checkCollides(Ball ball) {
+      boolean isCollides = false;
+      int index = 0;
+      while (!isCollides && index < drawables.size()) {
+	    var item = drawables.get(index);
+	    if (!item.isStatic() && (isCollides = item.collides(ball)))
+		  lastHandle = item;
+	    index += 1;
+      }
+
+}
+
 public Message getMessage(Ball ball) {
       Message msg = new Message(Event.Movement);
       if (restBlockCnt == 0) {
@@ -229,6 +273,7 @@ public Message getMessage(Ball ball) {
 	    msg.setValue(lastHandle);
 	    return msg;
       }
+      checkCollides(ball);
       if (isJumper(ball)) {
 	    msg.setEvent(Event.TrampolineCollision);
 	    msg.setValue(lastHandle);
@@ -239,7 +284,9 @@ public Message getMessage(Ball ball) {
       }
       return msg;
 }
+
 public static final int TRAMPOLINE_MIN_GAP = FIELD_WIDTH / 15;
+
 private void initTrampolines(int trampolineCnt) {
       final int maxCnt = FIELD_WIDTH / (Trampoline.DEFAULT_WIDTH + 2 * TRAMPOLINE_MIN_GAP);
       if (maxCnt < trampolineCnt)
@@ -291,6 +338,7 @@ public void rebuild() {
 	    brickIndex += 1;
       }
       updateTrampolines();
+      absorbAll();
 }
 
 public void setRatio(float ratio) {
@@ -335,7 +383,7 @@ public BrickBlock[] toArray() {
       return blockList.toArray(new BrickBlock[0]);
 }
 
-public Properties getProperties() {
+public Properties getProperty() {
       return new Properties(this);
 }
 

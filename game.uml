@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>/home/Paval/Triggers/LongTimed/BallDestroyer/core/src/com/baller/game</OriginalElement>
+  <nodes>
+    <node x="1448.3786817350872" y="2311.2343330790554">com.baller.game.BrickBlock</node>
+    <node x="1448.0152956336915" y="1622.4858080383974">com.baller.game.SpriteObject</node>
+    <node x="1387.000958211317" y="2513.714572602337">com.baller.game.MovableObject.Axis</node>
+    <node x="1552.0763379932373" y="108.39497958466188">com.baller.game.Game</node>
+    <node x="1119.1174044783534" y="1088.3868933388326">com.baller.game.Globals.Color</node>
+    <node x="1527.739789616625" y="2136.0236896519987">com.baller.game.RigidObject</node>
+    <node x="1377.001182809841" y="1383.634243593152">com.baller.game.GameField.Message</node>
+    <node x="1873.8387426832342" y="2379.1433347318925">com.baller.game.CircleCollider</node>
+    <node x="2023.192976056194" y="1145.4992572053425">com.baller.game.Player</node>
+    <node x="1126.7600941166752" y="2127.476679095841">com.baller.game.MovableObject</node>
+    <node x="2688.104717020738" y="2130.480859191968">com.baller.game.Collider.Side</node>
+    <node x="736.4122336251594" y="2188.9855185727365">com.baller.game.Ball</node>
+    <node x="1062.432133243641" y="413.64660297945704">com.baller.game.Globals</node>
+    <node x="1874.2317938448364" y="2216.722378257732">com.baller.game.Trampoline</node>
+    <node x="1950.3051712368394" y="1675.0370636846665">com.baller.game.Player.State</node>
+    <node x="1071.635619461607" y="2433.1100286845185">com.baller.game.MovableObject.VelocityLevel</node>
+    <node x="2218.2777589963675" y="2001.0916941211426">com.baller.game.Collider</node>
+    <node x="1637.516997792015" y="1342.813475913836">com.baller.game.GameField.Event</node>
+    <node x="2185.5787042337015" y="2256.898203944139">com.baller.game.SquareCollider</node>
+    <node x="2206.990247625389" y="1645.562050662356">com.baller.game.Player.Id</node>
+    <node x="1536.7483024038343" y="413.64660297945704">com.baller.game.GameField</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="com.baller.game.Player.State" target="com.baller.game.Player" relationship="INNER_CLASS">
+      <point x="97.99982876316062" y="-6.368466642925341E-5" />
+      <point x="2177.0" y="1758.537" />
+      <point x="2177.0" y="1657.537" />
+      <point x="2138.8050000000003" y="1657.537" />
+      <point x="-6.88797605619402" y="213.49974279465766" />
+    </edge>
+    <edge source="com.baller.game.Globals.Color" target="com.baller.game.Globals" relationship="INNER_CLASS">
+      <point x="23.314728765287555" y="-83.5" />
+      <point x="0.0" y="304.5" />
+    </edge>
+    <edge source="com.baller.game.Trampoline" target="com.baller.game.RigidObject" relationship="GENERALIZATION">
+      <point x="-102.4997938448364" y="-17.198378257731974" />
+      <point x="1766.24" y="2243.524" />
+      <point x="1766.24" y="2282.0" />
+      <point x="1638.24" y="2282.0" />
+      <point x="2.1038337490608683E-4" y="57.50031034800122" />
+    </edge>
+    <edge source="com.baller.game.GameField.Message" target="com.baller.game.GameField" relationship="INNER_CLASS">
+      <point x="-1.8280984113516752E-4" y="-83.50024359315182" />
+      <point x="1476.001" y="1313.0" />
+      <point x="1692.748" y="1313.0" />
+      <point x="-3.024038342118729E-4" y="434.500397020543" />
+    </edge>
+    <edge source="com.baller.game.SquareCollider" target="com.baller.game.Collider" relationship="REALIZATION">
+      <point x="-220.99970423370132" y="-2.0394413922986132E-4" />
+      <point x="2156.0" y="2496.398" />
+      <point x="2156.0" y="2097.092" />
+      <point x="-125.49975899636775" y="3.058788574890059E-4" />
+    </edge>
+    <edge source="com.baller.game.MovableObject.VelocityLevel" target="com.baller.game.MovableObject" relationship="INNER_CLASS">
+      <point x="3.805383930739481E-4" y="-83.50002868451884" />
+      <point x="1197.136" y="2403.0" />
+      <point x="1257.26" y="2403.0" />
+      <point x="-9.411667519998446E-5" y="122.5003209041588" />
+    </edge>
+    <edge source="com.baller.game.GameField.Event" target="com.baller.game.GameField" relationship="INNER_CLASS">
+      <point x="2.207985062341322E-6" y="-109.50047591383611" />
+      <point x="1737.017" y="1313.0" />
+      <point x="1692.748" y="1313.0" />
+      <point x="-3.024038342118729E-4" y="434.500397020543" />
+    </edge>
+    <edge source="com.baller.game.Ball" target="com.baller.game.MovableObject" relationship="GENERALIZATION">
+      <point x="159.0" y="-9.508839476894991" />
+      <point x="-130.5" y="0.0" />
+    </edge>
+    <edge source="com.baller.game.CircleCollider" target="com.baller.game.Collider" relationship="REALIZATION">
+      <point x="125.50025731676578" y="-3.3473189250798896E-4" />
+      <point x="2156.0" y="2540.643" />
+      <point x="2156.0" y="2097.092" />
+      <point x="-125.49975899636775" y="3.058788574890059E-4" />
+    </edge>
+    <edge source="com.baller.game.MovableObject.Axis" target="com.baller.game.MovableObject" relationship="INNER_CLASS">
+      <point x="-55.500958211317084" y="-70.49957260233691" />
+      <point x="1425.5" y="2403.0" />
+      <point x="1257.26" y="2403.0" />
+      <point x="-9.411667519998446E-5" y="122.5003209041588" />
+    </edge>
+    <edge source="com.baller.game.Player.Id" target="com.baller.game.Player" relationship="INNER_CLASS">
+      <point x="-54.00024762538942" y="-5.066235598860658E-5" />
+      <point x="2177.0" y="1676.562" />
+      <point x="2177.0" y="1657.537" />
+      <point x="2138.8050000000003" y="1657.537" />
+      <point x="-6.88797605619402" y="213.49974279465766" />
+    </edge>
+    <edge source="com.baller.game.RigidObject" target="com.baller.game.SpriteObject" relationship="GENERALIZATION">
+      <point x="-79.72449398293361" y="-57.5" />
+      <point x="0.0" y="226.5" />
+    </edge>
+    <edge source="com.baller.game.MovableObject" target="com.baller.game.RigidObject" relationship="GENERALIZATION">
+      <point x="130.4999058833248" y="-6.452679095841404" />
+      <point x="1510.24" y="2243.524" />
+      <point x="1510.24" y="2282.0" />
+      <point x="1638.24" y="2282.0" />
+      <point x="2.1038337490608683E-4" y="57.50031034800122" />
+    </edge>
+    <edge source="com.baller.game.BrickBlock" target="com.baller.game.RigidObject" relationship="GENERALIZATION">
+      <point x="3.1826491272113344E-4" y="-70.50033307905528" />
+      <point x="1630.879" y="2282.0" />
+      <point x="1638.24" y="2282.0" />
+      <point x="2.1038337490608683E-4" y="57.50031034800122" />
+    </edge>
+    <edge source="com.baller.game.Collider.Side" target="com.baller.game.Collider" relationship="INNER_CLASS">
+      <point x="-121.5" y="-28.38916507082581" />
+      <point x="125.5" y="88.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="0.500377643504532" showDependencies="false" x="2177.9494339622634" y="2008.3524528301882" />
+  <SelectedNodes>
+    <node>com.baller.game.Globals.Color</node>
+    <node>com.baller.game.Globals</node>
+  </SelectedNodes>
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

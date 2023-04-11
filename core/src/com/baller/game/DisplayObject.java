@@ -8,8 +8,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import java.awt.*;
 
 public abstract class DisplayObject {
-public enum DisplayState {Visible, Hidden, Disabled}
-
+public enum DisplayState {Visible, Hidden, Disabled, Static}
 protected Sprite spriteBack;
 protected int width;
 protected int height;
@@ -48,7 +47,9 @@ public boolean isActive(){
 public boolean isVisible() {
       return state == DisplayState.Visible;
 }
-
+public boolean isStatic() {
+      return state == DisplayState.Static;
+}
 public void setScale(float scale) {
       if (spriteBack != null)
 	    spriteBack.setScale(scale);
@@ -82,8 +83,17 @@ public void setPos(int x, int y) {
 public final Point getPos(){
       return virtualPos;
 }
+
+
+private Collider collider;
+public void setCollider(Collider collider){
+      this.collider = collider;
+}
+public Collider collider(){
+      return this.collider;
+}
 public boolean collides(DisplayObject other) {
-      return false;
+      return this.collider().collides(other.collider());
 }
 public int getWidth() {
       return width;

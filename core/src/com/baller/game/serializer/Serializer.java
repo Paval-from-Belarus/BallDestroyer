@@ -1,10 +1,12 @@
 package com.baller.game.serializer;
 
+import com.baller.game.Settings;
 import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import com.baller.game.field.GameField;
 import com.baller.game.players.Players;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,9 +15,6 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Serializer {
 
@@ -25,6 +24,7 @@ public static final String DEFAULT_NAME = "game.back";
 public  GameField.Properties field;
 public Player.Properties[] players;
 public Map<Integer, String> nameMapper;
+public Settings.Properties settings;
 public String configPath;
 
 private void setPlayersProps(Players players) throws NoSuchFieldException, IllegalAccessException {
@@ -43,7 +43,6 @@ private void setPlayersProps(Players players) throws NoSuchFieldException, Illeg
       }
       this.players = properties;
 }
-
 @SuppressWarnings("unchecked")
 private void setPlayerMapper(Players players) throws NoSuchFieldException, IllegalAccessException {
       var playersClass = players.getClass();
@@ -65,7 +64,11 @@ public Serializer setPlayers(Players players) throws NoSuchFieldException, Illeg
       return this;
 }
 public Serializer setGameField(GameField field){
-      this.field  = field.getProperties();
+      this.field  = field.getProperty();
+      return this;
+}
+public Serializer setSettings(Settings settings){
+      this.settings = settings.serializer();
       return this;
 }
 public Serializer() {}
@@ -96,7 +99,19 @@ public boolean fromFile(@NotNull String sourceName, @NotNull SerializationMode m
       try {
 	    String content = Files.readString(path);
 	    TextSerializer text = new TextSerializer();
-	    Serializer father = text.fromText(content);
+	    Serializer father;
+	    if(mode == SerializationMode.Json){
+		  Gson gson = new GsonBuilder()
+				  .setLenient()
+				  .disableHtmlEscaping()
+				  .setPrettyPrinting()
+				  .create();
+		  father = new Gson().fromJson(content, Serializer.class);
+	    }
+	    else {
+		  father = text.fromText(content);
+	    }
+
       } catch(Exception e){
 	    response = false;
       }

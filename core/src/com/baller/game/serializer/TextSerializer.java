@@ -1,12 +1,12 @@
 package com.baller.game.serializer;
 
+import com.baller.game.Settings;
 import com.baller.game.field.BrickBlock;
 import com.baller.game.field.GameField;
 import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -47,21 +47,8 @@ private String serializeField(GameField.Properties props) throws NoSuchFieldExce
 private String serializeBalls(Ball.Properties[] properties) throws IllegalAccessException {
       StringBuilder strBalls = new StringBuilder();
       strBalls.append("###Balls").append("\n");
-      for (var props : properties) {
-	    for (Field field : props.getClass().getDeclaredFields()) {
-		  field.setAccessible(true);
-		  strBalls.append(field.getName())
-		      .append("=");
-		  if (!(field.get(props) instanceof Point)) {
-			strBalls.append(field.get(props));
-		  } else {
-			Point point = (Point) field.get(props);
-			strBalls.append("(x=").append(point.x).append(",");
-			strBalls.append("y=").append(point.y).append(")");
-		  }
-		  strBalls.append("\n");
-	    }
-      }
+      for (var props : properties)
+	    strBalls.append(props.toString());
       return strBalls.toString();
 }
 
@@ -95,12 +82,17 @@ private String serializePlayers(Player.Properties[] properties, Map<Integer, Str
 
 }
 
+private String serializeSettings(Settings.Properties props) {
+      return "##Settings\n" + props.serialize();
+}
+
 public String toText(Serializer source) {
       StringBuilder builder = new StringBuilder();
       try {
 	    builder
 		.append(serializeField(source.field))
-		.append(serializePlayers(source.players, source.nameMapper));
+		.append(serializePlayers(source.players, source.nameMapper))
+		.append(serializeSettings(source.settings));
       } catch (NoSuchFieldException | IllegalAccessException e) {
 	    throw new RuntimeException(e);
       }
@@ -151,8 +143,9 @@ private Map<Integer, String> getNameMapper(String source) throws ReflectiveOpera
 }
 
 private Ball.Properties extractBall(String[] rawBall) {
-      	//todo: ideas about radius and etc
-	return null;
+      final String[] patterns = {"Pos=\\(x="};
+
+      return null;
 }
 
 private @Nullable Player.Properties extractPlayer(String rawPlayer) throws ReflectiveOperationException {
@@ -201,18 +194,15 @@ private Player.Properties[] getPlayers(String source) throws ReflectiveOperation
       List<Player.Properties> list = new ArrayList<>();
       int offset = 0;
       matcher.region(offset, source.length());
-      while(matcher.find() && matcher.group(1) != null){
+      while (matcher.find() && matcher.group(1) != null) {
 	    String rawPlayer = matcher.group(1);
 	    offset = matcher.end();
 	    var props = extractPlayer(rawPlayer);
-	    if(props == null)
+	    if (props == null)
 		  throw new IllegalStateException("Incorrect file");
 	    list.add(props);
 	    matcher.region(offset, source.length());
       }
-//      for (int i = 1; i < matcher.groupCount(); i++) {
-//	    System.out.println(i + " -> " + matcher.group(i));
-//      }
       return null;
 }
 
@@ -253,11 +243,25 @@ private GameField.Properties getFieldProperties(String source) throws Reflective
       return result;
 }
 
+public @Nullable Settings.Properties getSettings(String content) {
+      Pattern pattern = Pattern.compile("###Settings\n(.|\n)+");
+      Matcher matcher = pattern.matcher(content);
+      if (!matcher.find() || matcher.groupCount() == 0) {
+	    return null;
+      }
+      Settings.Properties props = new Settings.Properties();
+      props.deserialize(matcher.group(1));
+      if(props.isEmpty())
+	    props = null;
+      return props;
+}
+
 public Serializer fromText(String content) throws ReflectiveOperationException {
       Serializer result = new Serializer();
       result.field = getFieldProperties(content);
       result.nameMapper = getNameMapper(content);
-      getPlayers(content);
+      result.players = getPlayers(content);
+      result.settings = getSettings(content);
       return result;
 }
 }

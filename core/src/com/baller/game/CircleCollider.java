@@ -108,4 +108,7 @@ private void initSides() {
       sides[3] = Side.valueOf((int) (center.x + radius), (int) (center.y + radius),
 	  (int) (center.x - radius), (int) (center.y + radius));
 }
+public Point[] getPoints(){
+      return null;
+}
 }

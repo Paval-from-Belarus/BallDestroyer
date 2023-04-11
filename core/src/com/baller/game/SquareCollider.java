@@ -11,6 +11,8 @@ Point center;
 //diags
 float a1, b1;
 float a2, b2;
+private Point upper;
+private Point lower;
 
 public SquareCollider(int width, int height) {
       this.width = width;
@@ -26,8 +28,21 @@ public SquareCollider(int width, int height, Point center) {
 
 @Override
 public boolean collides(Collider other) {
-      return false;
+      Side closest = other.getSide(center);
+      return collides(closest.getStart(), closest.getEnd());
 }
+
+//@Override
+//public boolean collides(Collider other) {
+//      boolean isCollides = false;
+//      Point[] points = other.getPoints();
+//      for (int i = 0; i < points.length && !isCollides; i++) {
+//	    isCollides = upper.x > points[i].x && lower.x < points[i].x &&
+//			     upper.y > points[i].y && lower.y < points[i].y;
+//
+//      }
+//      return isCollides;
+//}
 
 @Override
 public boolean collides(Point start, Point end) {
@@ -114,6 +129,10 @@ public Side getSide(Point center) {
 public void move(Point center) {
       this.center = center;
       updateSides();
+}
+
+public Point[] getPoints() {
+      return null;
 }
 
 public Point center() {

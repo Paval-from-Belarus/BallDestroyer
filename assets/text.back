@@ -1,0 +1,53 @@
+#Field properties
+Ratio=0.7
+PlayerCnt=3
+TrampolineCnt=3
+Blocks=[Plain, Plain, Plain, Plain, Plain, Plain, Killer, Killer, Killer, Killer, Killer, Killer, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Killer, Killer, Killer, Killer, Killer, Killer]
+
+#Players' properties
+##Name mapping
+Ваня=>0
+Ivan=>1
+Ignat=>2
+
+##Players' configuration
+###Player
+Id=0
+Score=0
+Trampolines=1
+###Balls
+Pos=(x=175,y=55)
+Velocity=(-60.0,120.0)
+Radius=25.0
+Pos=(x=175,y=55)
+Velocity=(60.0,120.0)
+Radius=25.0
+
+###Player
+Id=1
+Score=0
+Trampolines=1
+###Balls
+Pos=(x=175,y=55)
+Velocity=(-60.0,120.0)
+Radius=25.0
+Pos=(x=175,y=55)
+Velocity=(60.0,120.0)
+Radius=25.0
+
+###Player
+Id=2
+Score=0
+Trampolines=1
+###Balls
+Pos=(x=175,y=55)
+Velocity=(-60.0,120.0)
+Radius=25.0
+Pos=(x=175,y=55)
+Velocity=(60.0,120.0)
+Radius=25.0
+
+##Settings
+Resolution=(640.0, 480.0)
+Hardness=0
+SoundLevel=0.3

@@ -15,15 +15,29 @@ public class Ball extends AnimatedObject {
 public static class Properties {
       private Point pos;
       private Vector2 velocity;
-      private Properties(){}
+      private float radius;
+
+      private Properties() {
+      }
+
       private Properties(Ball owner) {
 	    this.pos = owner.virtualPos;
 	    this.velocity = owner.velocity;
+	    this.radius = owner.getHeight() / 2f;
       }
 
       private void restore(Ball owner) {
 	    owner.velocity = velocity;
 	    owner.setPos(pos.x, pos.y);
+      }
+
+      @Override
+      public String toString() {
+	    return "Pos=" +
+		       "(x=" + this.pos.x + "," +
+		       "y=" + this.pos.y + ")\n" +
+		       "Velocity=" + this.velocity.toString() + "\n" +
+		       "Radius=" + this.radius + "\n";
       }
 }
 
@@ -38,9 +52,10 @@ Ball(Texture texture) {
       update(0f);
 }
 
-void restore(Ball.Properties properties){
+void restore(Ball.Properties properties) {
       properties.restore(this);
 }
+
 public void freeze() {
       this.velocity = new Vector2(0f, 0f);
 }
