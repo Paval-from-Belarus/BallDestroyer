@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Null;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.*;
 import com.baller.game.GameController.Event;
@@ -12,8 +11,6 @@ import com.baller.game.field.GameField;
 
 import java.awt.*;
 import java.io.File;
-import java.io.Serial;
-import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -23,7 +20,6 @@ import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import com.baller.game.players.Players;
 import com.baller.game.serializer.Serializer;
-import org.jetbrains.annotations.Nullable;
 
 public class Game extends com.badlogic.gdx.Game {
 public enum Stage {GameProcess, Settings, MainMenu, GamePause}
@@ -37,8 +33,10 @@ private Viewport viewport;
 private Consumer<Float> renderHandler;
 
 private AtomicBoolean isActive;
+private AtomicBoolean isFieldCreated;
 
 {
+      isFieldCreated = new AtomicBoolean(false);
       isActive = new AtomicBoolean(true);
       renderHandler = this::defaultRenderHandler;
 }
@@ -57,6 +55,10 @@ private void initSettings(){
       settings.setSoundLevel(0.3f);
 }
 private void initField(float dt) {
+      if(isFieldCreated.get()){
+	    renderHandler = this::dispatchField;
+	    return;
+      }
       players = new Players();
       var list = new Array<Player.Id>();
       var id = players.add("John");
@@ -64,12 +66,16 @@ private void initField(float dt) {
       list.add(players.add("Ivan"));
       list.add(players.add("Ignat"));
       field = new GameField(players.getAll());
-      field.verify(id, players::release);
-      field.setRatio(0.7f);
+      if(field.verify(id)){
+	    players.release(id);
+      }
+      field.setRatio(0.3f);
       field.setTrampolineCnt(id, 3);
+      players.get(id).ifPresent(player -> player.setTrampolineCnt(3));
       field.rebuild();
-      renderHandler = this::dispatchField;
       settings.setSkin("White");
+      isFieldCreated.set(true);
+      renderHandler = this::dispatchField;
 }
 
 /**
@@ -77,7 +83,7 @@ private void initField(float dt) {
  * At another way, return empty
  * This convention is applicable for save method
  * */
-private Optional<Serializer> load(){
+private Optional<Serializer> findSavedGame(){
       File jsonBack = Settings.getJsonBackPath().toFile();
       File txtBack = Settings.getTxtBackPath().toFile();
       Serializer serializer = new Serializer();
@@ -88,6 +94,20 @@ private Optional<Serializer> load(){
 	    return Optional.of(serializer);
       }
       return Optional.empty();
+}
+private void load(Object handle){
+      var serializer = findSavedGame();
+      serializer.ifPresentOrElse(s -> {
+	    this.field = s.field.construct();
+	    this.field.addPlayers(s.players);
+	    this.players = new Players(s.players, s.nameMapper);
+	    if(this.field.verify(s.players[0].getId())){
+		  players.release(s.players[0].getId());
+	    }
+	    this.field.rebuild();
+	    this.settings = s.settings.construct();
+	    isFieldCreated.set(true);
+      }, () -> System.out.println("NO CONFIG FILE"));
 }
 /**@param handle is any handle that will be skipped
  * */
@@ -100,8 +120,8 @@ private void save(Object handle) {
 		.setGameField(field)
 		.setSettings(settings);
 	    Runnable task = () -> {
-		  serializer.toFile("json.back", Serializer.SerializationMode.Json);
-		  serializer.toFile("text.back", Serializer.SerializationMode.Text);
+		  serializer.toFile(Settings.getJsonBackPath().toString(), Serializer.SerializationMode.Json);
+		  serializer.toFile(Settings.getTxtBackPath().toString(), Serializer.SerializationMode.Text);
 	    };
 	    executor = new Thread(task);
       } catch (Exception e) {
@@ -120,9 +140,10 @@ private void save(Object handle) {
 private void defaultRenderHandler(float dt) {}
 
 private void freezeField(float dt) {
-      renderHandler = this::defaultRenderHandler;
-      controller.addCallback(Event.OnScreenChange, this::pauseHandler);
+      renderHandler = this::renderField;
+      controller.addCallback(Event.onStageChange, this::pauseHandler);
       controller.addCallback(Event.OnProgressSave, this::save);
+      controller.addCallback(Event.OnProgressRestore, this::load);
 }
 
 public Supplier<Boolean> guardRuler(Supplier<Boolean> handle) {
@@ -134,8 +155,9 @@ public Supplier<Boolean> guardRuler(Supplier<Boolean> handle) {
 }
 private void pauseHandler(Object rawScreen) {
       if (controller.getStage() != Stage.GamePause) {
-	    controller.removeCallback(Event.OnScreenChange, this::pauseHandler);
+	    controller.removeCallback(Event.onStageChange, this::pauseHandler);
 	    controller.removeCallback(Event.OnProgressSave, this::save);
+	    controller.removeCallback(Event.OnProgressSave, this::load);
       }
 }
 
@@ -143,7 +165,7 @@ private void initController() {
       controller = new GameController();
       controller.setViewport(viewport);
       controller.addCallback(Event.OnResolutionChange, this::changeResolution);
-      controller.addCallback(Event.OnScreenChange, this::changeScreen);
+      controller.addCallback(Event.onStageChange, this::onChangeStage);
       controller.addCallback(Event.OnProgramExit, this::onApplicationExit);
       controller.init();
 }
@@ -152,8 +174,9 @@ private void onApplicationExit(Object handle) {
       Gdx.app.exit();
 }
 
-private void changeScreen(Object rawScreen) {
-      super.setScreen(((Screen) rawScreen));
+private void onChangeStage(Object rawScreen) {
+      if(super.screen != rawScreen)
+      	super.setScreen(((Screen) rawScreen));
       switch (controller.getStage()) {
 	    case GameProcess -> renderHandler = this::initField;
 	    case GamePause -> renderHandler = this::freezeField;
@@ -175,7 +198,12 @@ private void dispatchPlayer(Player player) {
 	    player.dispatch(msg, ball);
       }
 }
-
+private void renderField(float dt){
+      batch.begin();
+      field.draw(batch);
+      players.draw(batch);
+      batch.end();
+}
 private void dispatchField(float dt) {
       for (Player.Properties properties : players.getVerified()) {
 	    Optional<Player> player = players.get(properties.getId());
@@ -183,11 +211,7 @@ private void dispatchField(float dt) {
       }
       players.update(dt);
       field.update(dt);
-
-      batch.begin();
-      field.draw(batch);
-      players.draw(batch);
-      batch.end();
+      renderField(dt);
 }
 
 @Override
@@ -195,6 +219,7 @@ public void render() {
       ScreenUtils.clear(0.3f, 0.4f, 0.7f, 1f);
       viewport.apply();
       batch.setProjectionMatrix(viewport.getCamera().combined);
+      controller.dispatchInput();
       renderHandler.accept(Gdx.graphics.getDeltaTime());
       super.render();
 }

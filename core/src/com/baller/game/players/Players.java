@@ -20,12 +20,17 @@ public Players() {
       nextIndex = 0;
 }
 
-private Players(Player.Properties[] properties, Map<Player.Id, String> playersMap) {
+public Players(Player.Properties[] properties, Map<Integer, String> playersMap) {
       nextIndex = properties.length;//tricky step
-      this.playersMap = playersMap;
+      this.playersMap = new HashMap<>();
       this.players = new ArrayList<>();
-      for (var props : properties)
-	    players.add(props.construct());
+      for (var props : properties){
+	    Player player = props.construct();
+	    players.add(player);
+	    //todo: replace with beautiful solution
+	    String name = playersMap.get(player.getId().value);
+	    this.playersMap.put(player.getId(), name);
+      }
 
 }
 

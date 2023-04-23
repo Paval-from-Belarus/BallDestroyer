@@ -3,6 +3,7 @@ package com.baller.game.uicomponents;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.baller.game.DisplayObject;
 import org.w3c.dom.Text;
@@ -21,5 +22,16 @@ protected void addActor(Actor actor){
 }
 public Array<Actor> getActors() {
       return actors;
+}
+public void hide(){
+      super.setState(DisplayState.Hidden);
+      for(Actor actor : getActors()){
+            actor.remove();
+      }
+}
+public void show(Stage stage){
+      super.setState(DisplayState.Visible);
+      for(Actor actor : getActors())
+            stage.addActor(actor);
 }
 }

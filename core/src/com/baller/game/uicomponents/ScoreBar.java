@@ -2,6 +2,7 @@ package com.baller.game.uicomponents;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -23,7 +24,6 @@ private static final int DEFAULT_HEIGHT = 50;
 private static final float DEFAULT_ALPHA = 0.3f;
 private final Label title;
 private final Button pause;
-
 private Integer score;
 private final Skin skin;
 private Texture background;
@@ -35,7 +35,7 @@ public ScoreBar(Skin skin) {
       setTexture(background);
       setAlpha(DEFAULT_ALPHA);
       setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-      setPos(Globals.FIELD_WIDTH >> 1, Globals.FIELD_HEIGHT - (height >> 1));
+      setPos(Globals.FIELD_WIDTH >> 1, Globals.FIELD_HEIGHT - (DEFAULT_HEIGHT >> 1));
       this.skin = skin;
       this.title = new Label(ScoreBar.TITLE_TEXT, skin);
       setTitle();
@@ -55,7 +55,7 @@ private void setTitle() {
       addActor(title);
 }
 
-private final static int BUTTON_WIDTH = 50;
+private final static int  BUTTON_WIDTH = 50;
 private final static int BUTTON_HEIGHT = 50;
 private void setPauseButton(){
       final int xOffset = getPos().x + getWidth() / 2 - getWidth() / 5;
@@ -68,14 +68,15 @@ private void setPauseButton(){
           Globals.convertWidth(xOffset),
           Globals.convertHeight(yOffset)
       );
-      pause.addListener(event -> {
-            System.out.println(event.getTarget());
-            return false;
-      });
       addActor(pause);
 }
-public void addPauseListener(ClickListener listener){
-      pause.addListener(listener);
+public void addPauseListener(EventListener listener){
+      pause.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                  listener.handle(event);
+            }
+      });
 }
 public void dispose(){
       background.dispose();

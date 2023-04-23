@@ -1,0 +1,33 @@
+#Field's properties
+Ratio=0.300
+Blocks=[Destroyed, DamageBonus, HealBonus, Destroyed, Plain, DamageBonus, Destroyed, Plain, Destroyed, Destroyed, Killer, Destroyed]
+
+#Players' properties
+##Name mapping
+null=>0
+null=>1
+null=>2
+
+##Players' configuration
+###Player
+Id=0
+Score=6
+TrampolineCnt=3
+Balls=[{Pos=(x=352,y=387),Velocity=(60.0,120.0),Radius=25.000}]
+###Player
+Id=1
+Score=0
+TrampolineCnt=1
+Balls=[{Pos=(x=175,y=55),Velocity=(-60.0,120.0),Radius=25.000}, {Pos=(x=175,y=55),Velocity=(60.0,120.0),Radius=25.000}]
+###Player
+Id=2
+Score=0
+TrampolineCnt=1
+Balls=[{Pos=(x=175,y=55),Velocity=(-60.0,120.0),Radius=25.000}, {Pos=(x=175,y=55),Velocity=(60.0,120.0),Radius=25.000}]
+
+#Settings
+Resolution=(640.0, 480.0)
+Hardness=0
+SoundLevel=0.3
+SkinName=White
+

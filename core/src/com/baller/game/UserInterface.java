@@ -12,6 +12,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.baller.game.screens.GameScreen;
 import com.baller.game.screens.MainMenuScreen;
 import com.baller.game.screens.SettingsScreen;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,24 +31,13 @@ public void setViewport(Viewport viewport){
 	this.viewport = viewport;
 }
 public static class UserClick {
-      public enum Type {Move, Release, Pressed, Touched}
-
-      public enum Id {BtnPause, BtnSettings, BtnMainMenu}
-
+      public enum Id {BTN_GAME_PAUSE, BTN_GAME_SAVE, BTN_GAME_RESUME, BTN_GAME_RESTORE, BtnSettings, BtnMainMenu}
       public Id getId() {
 	    return value;
       }
-
-      public Type getType() {
-	    return type;
-      }
-
-      public UserClick(Type type, Id id) {
-	    this.type = type;
+      public UserClick(Id id) {
 	    this.value = id;
       }
-
-      private Type type;
       private Id value;
 }
 
@@ -59,7 +49,7 @@ public static class MessageInfo {
 }
 
 public static class Message {
-      public enum Type {Defeat, Victory, NetworkLost, Process}
+      public enum Type {Defeat, Victory, NetworkLost, Process, Warning}
 
       private Texture texture;
       private Button button;
@@ -91,8 +81,14 @@ public void setScreen(ScreenType type) {
  */
 public void setComponent(UserClick handle, Object value) {
 }
-public List<UserClick> getUserClick() {
-      return null;
+public @NotNull List<UserClick> getUserClick() {
+      if(mainScreen instanceof GameScreen){
+	    var click = ((GameScreen)mainScreen).getMessage();
+	    if(click != null){
+		  return List.of(click);
+	    }
+      }
+      return List.of();
 }
 
 public Screen getScreen() {

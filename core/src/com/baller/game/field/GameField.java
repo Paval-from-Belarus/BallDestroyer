@@ -12,11 +12,9 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.baller.game.DisplayObject.*;
 import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import com.baller.game.serializer.AbstractSerializable;
-import com.baller.game.serializer.TextSerializer;
 import org.jetbrains.annotations.NotNull;
 
 import static com.baller.game.Globals.*;
@@ -53,14 +51,14 @@ public static class Properties extends AbstractSerializable<GameField> {
       public GameField construct() {
 	    GameField field = new GameField();
 	    field.setRatio(ratio);
-	    //todo: set blocks
-	    field.rebuild();
+	    field.blockTypes = blocks;
 	    return field;
       }
 
       private void setRatio(String source) {
 	    this.ratio = Float.parseFloat(source);
       }
+
       private void setBlocks(String source) {
 	    String[] items = source.split(", *");
 	    this.blocks = Arrays.stream(items)
@@ -119,9 +117,8 @@ public static void DefaultDispatcher(Message msg, Ball player) {
       switch (msg.event) {
 	    case BlockCollision -> {
 		  BrickBlock block = (BrickBlock) msg.getValue();
-		  Collider body = block.collider();
 		  if (block.isVisible()) {
-			block.setState(DisplayState.Hidden);
+			block.setType(BrickBlock.Type.Destroyed);
 			block.callback();
 			player.reflect(AnimatedObject.Axis.Horizontal);
 		  }
@@ -148,6 +145,8 @@ public static BrickBlock.Type[] getRandomBricks(int brickCnt) {
       Random random = new Random();
       for (int i = 0; i < brickTypes.length; i++) {
 	    int typeIndex = random.nextInt(BrickBlock.Type.values().length);
+	    if (typeIndex == BrickBlock.Type.Destroyed.ordinal())
+		  typeIndex = BrickBlock.Type.Plain.ordinal();
 	    brickTypes[i] = BrickBlock.Type.values()[typeIndex];
       }
       return brickTypes;
@@ -164,7 +163,8 @@ private int ceilHeight;
 private List<BrickBlock> blockList;
 private BrickBlock.Type[] blockTypes;
 private List<Trampoline> trampolines;
-private List<PlayerTrampolines> trampolineCounters;
+private List<PlayerTrampolines> playerTrampolines;
+private List<Player.Id> players;
 private final Texture textBlock;
 private final Texture textTrampoline;
 
@@ -174,29 +174,57 @@ private final Texture textTrampoline;
 }
 
 private GameField() {
+	players = new ArrayList<>();
 }
 
 public GameField(Player.Properties[] properties) {
+      this();
       if (properties.length == 0)
 	    throw new IllegalStateException("This function is not implemented");
-      var trampolines = Arrays.stream(properties)
-			    .map(player -> new PlayerTrampolines(player.getId(), player.getTrampolineCnt()))
-			  .collect(Collectors.toList());
-      initTrampolines(trampolines);
-      rebuild();
-}
-public void addPlayers(Player.Properties[] properties){
-      //todo: add players
-}
-public void verifyAll(@NotNull Player.Id[] players, @NotNull Consumer<Player.Id> callback) {
-      if (players.length == 0)
-	    return;
-      Player.Id id = players[0];
-      callback.accept(id);
+      addPlayers(properties);
 }
 
-public void verify(@NotNull Player.Id player, @NotNull Consumer<Player.Id> callback) {
-      callback.accept(player);
+public void addPlayers(Player.Properties[] properties) {
+      playerTrampolines = Arrays.stream(properties)
+			      .map(player -> new PlayerTrampolines(player.getId(), player.getTrampolineCnt()))
+			      .collect(Collectors.toList());
+}
+
+/**
+ * @return verify as much players as possible
+ */
+public int verifyAll(@NotNull Player.Id[] players) {
+      int verifiedCnt = 0;
+      for (Player.Id id : players) {
+	    if (verify(id))
+		  verifiedCnt += 1;
+	    else
+		  break;
+      }
+      return verifiedCnt;
+}
+
+public boolean verify(@NotNull Player.Id player) {
+      boolean isAdded = false;
+      if (nextTrampolineRow < MAX_TRAMPOLINES_ROW_CNT) {
+	    players.add(player);
+	    isAdded = true;
+      }
+      return isAdded;
+}
+
+/**
+ * @return if player exists return true<br>
+ * else return false
+ */
+public boolean remove(@NotNull Player.Id player) {
+      boolean isRemoved = players.remove(player);
+      if (isRemoved) {
+	    playerTrampolines = playerTrampolines.stream()
+				    .filter(t -> !t.belongs(player))
+				    .collect(Collectors.toList());
+      }
+      return isRemoved;
 }
 
 public void update(float dt) {
@@ -245,9 +273,10 @@ public void draw(final SpriteBatch batch) {
 }
 
 public void setTrampolineCnt(Player.Id id, int trampolineCnt) {
-      this.trampolineCounters.get(0).setTrampolineCnt(trampolineCnt);
-      initTrampolines(this.trampolineCounters);
-      //todo: implement this method
+      playerTrampolines.stream()
+	  .filter(t -> t.belongs(id))
+	  .findFirst()
+	  .ifPresent(batch -> batch.setCapacity(trampolineCnt));
 }
 
 private List<DisplayObject> drawables;
@@ -294,29 +323,59 @@ public Message getMessage(Ball ball) {
 }
 
 public static final int TRAMPOLINE_MIN_GAP = FIELD_WIDTH / 15;
+public static final int RED_ZONE_BORDER = 40;
+private static int MAX_TRAMPOLINES_ROW_CNT = 1;
+private int nextTrampolineRow = 0;//index
 
-private void initTrampolines(List<PlayerTrampolines> trampolineCounters) {
-      assert trampolineCounters.size() > 0;
-      this.trampolineCounters = trampolineCounters;
-      int trampolineCnt = trampolineCounters.get(0).getTrampolineCnt();
-      final int maxCnt = FIELD_WIDTH / (Trampoline.DEFAULT_WIDTH + 2 * TRAMPOLINE_MIN_GAP);
-      if (maxCnt < trampolineCnt)
-	    trampolineCnt = maxCnt;
-      this.trampolines = new ArrayList<>(trampolineCnt);
-      for (int i = 0; i < trampolineCnt; i++)
-	    trampolines.add(new Trampoline(textTrampoline));
+private int nextTrampolineHeight() {
+      int height = 0;
+      if (nextTrampolineRow < MAX_TRAMPOLINES_ROW_CNT) {
+	    height = (int) ((float) nextTrampolineRow / MAX_TRAMPOLINES_ROW_CNT * RED_ZONE + RED_ZONE_BORDER);
+	    nextTrampolineRow += 1;
+      }
+      return height;
+}
+private void initAllTrampolines(){
+      trampolines = new ArrayList<>();
+      for(Player.Id id : players){
+	    var list = initTrampolines(id);
+	    if(list.size() > 0){
+		  trampolines.addAll(list);
+	    }
+      }
+}
+private @NotNull List<Trampoline> initTrampolines(Player.Id id) {
+      if (nextTrampolineRow >= MAX_TRAMPOLINES_ROW_CNT)
+	    return List.of();
+      var dummyBatch = playerTrampolines.stream()
+			   .filter(b -> b.belongs(id))
+			   .findFirst();
+      List<Trampoline> list = List.of();
+      if (dummyBatch.isPresent()) {
+	    var batch = dummyBatch.get();
+	    int count = batch.capacity();
+	    final int maxCnt = FIELD_WIDTH / (Trampoline.DEFAULT_WIDTH + 2 * TRAMPOLINE_MIN_GAP);
+	    if (maxCnt < count)
+		  count = maxCnt;
+	    batch.clear();
+	    for (int i = 0; i < count; i++) {
+		  batch.add(new Trampoline(textTrampoline));
+	    }
+	    alignTrampolines(batch.list(), nextTrampolineHeight());
+	    list = batch.list();
+      }
+      return list;
 }
 
-private void updateTrampolines() {
-      if (this.trampolines == null)
-	    initTrampolines(trampolineCounters);
-      assert trampolines.size() > 0;
-      final int TR_HEIGHT = 30;
+private void alignTrampolines(List<Trampoline> trampolines, final int height) {
+      if (this.playerTrampolines == null)
+	    return;
+      assert trampolines.size() > 0 && height > 0;
       final int pieceSize = FIELD_WIDTH / trampolines.size();
       final int gap = Math.max(pieceSize >> 1, TRAMPOLINE_MIN_GAP);
       int xOffset = 0;
       for (Trampoline trampoline : trampolines) {
-	    trampoline.setPos(xOffset + gap, TR_HEIGHT);
+	    trampoline.setPos(xOffset + gap, height);
 	    xOffset += pieceSize;
       }
 }
@@ -343,21 +402,22 @@ public void rebuild() {
 		  block.setCallback(this::blockCallback, null);
 		  blockList.add(block);
 		  currPos.translate(this.ceilWidth, 0);
+		  brickIndex += 1;
 	    }
 	    currPos.x = START_OFFSET_X;
 	    currPos.translate(0, -this.ceilHeight);
-	    brickIndex += 1;
       }
-      updateTrampolines();
+      initAllTrampolines();
       absorbAll();
 }
 
 public void setRatio(float ratio) {
-      if (ratio > 1.0f)
-	    ratio = 1f;
+      if (ratio > 0.7f)
+	    ratio = 0.7f;
       if (ratio < 0.2f)
 	    ratio = 0.2f;
       FIELD_RATIO = ratio;
+      MAX_TRAMPOLINES_ROW_CNT = RED_ZONE / TRAMPOLINE_HEIGHT; //todo: replace with more beautiful formula
       TABLE_HEIGHT = (int) (FIELD_HEIGHT * FIELD_RATIO);
       RED_ZONE = FIELD_HEIGHT - TABLE_HEIGHT;
 }
@@ -425,6 +485,7 @@ private boolean isJumper(Ball player) {
       for (int i = 0; i < trampolines.size() && !hasCollision; i++) {
 	    Collider ramp = trampolines.get(i).collider();
 	    Trampoline trampoline = trampolines.get(i);
+//	    hasCollision = ball.collides(ramp);
 	    hasCollision = (ball.center().y - player.getWidth() / 2 <= ramp.center().y) &&
 			       ((ball.center().x <= ramp.center().x + trampoline.getWidth() / 2) && (ball.center().x >= ramp.center().x - trampoline.getWidth() / 2));
       }

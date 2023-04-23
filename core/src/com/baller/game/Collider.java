@@ -6,6 +6,7 @@ public interface Collider {
 class Side {
       private final Point start;
       private final Point end;
+
       Side(Point start, Point end) {
 	    this.start = start;
 	    this.end = end;
@@ -26,7 +27,7 @@ class Side {
 	    );
       }
 }
-Point[] getPoints();
+
 boolean collides(Collider other);
 
 boolean collides(Point start, Point end);

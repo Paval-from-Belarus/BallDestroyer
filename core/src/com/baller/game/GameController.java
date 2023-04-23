@@ -5,24 +5,24 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.baller.game.UserInterface.*;
 
-import javax.security.auth.callback.TextInputCallback;
+import static com.baller.game.Game.Stage.GamePause;
+import static com.baller.game.Game.Stage.GameProcess;
 
 public class GameController {
 /**<code>OnScreenChange</code> event corrupted when user change current menu. In this case, handle object
  * is <code>UserInterface.ScreenType</code>
  * */
-public enum Event {OnResolutionChange, OnScreenChange, OnProgressSave, OnSkinChange, OnProgramExit}
+public enum Event {OnResolutionChange, onStageChange, OnProgressSave, OnProgressRestore,OnSkinChange, OnProgramExit}
 
 private Game.Stage stage;
 private UserInterface ui;
 private Map<Event, List<Consumer<Object>>> callbackMap;
+private Object lastHandle;
 
 GameController() {
       callbackMap = new HashMap<>();
@@ -36,8 +36,19 @@ public void setViewport(Viewport port) {
 public void dispatchInput() {
       List<UserClick> clicks = ui.getUserClick();
       for (UserClick click : clicks) {
-
+            var event = convertClick(click);
+            event.ifPresent(self -> throughCallback(self, null));
       }
+}
+private Optional<Event> convertClick(UserClick click){
+      Optional<Event> result = Optional.empty();
+      switch(click.getId()){
+            case BTN_GAME_PAUSE -> setStage(GamePause);
+            case BTN_GAME_RESUME -> setStage(GameProcess);
+            case BTN_GAME_SAVE -> result = Optional.of(Event.OnProgressSave);
+            case BTN_GAME_RESTORE -> result = Optional.of(Event.OnProgressRestore);
+      }
+      return result;
 }
 
 public void sendMessage(Message.Type type, MessageInfo info, Supplier<Boolean> ruleHandler) {
@@ -52,7 +63,18 @@ private void loopHandler(Supplier<Boolean> ruler, Runnable lastTask) {
       }
       lastTask.run();
 }
-
+private void throughCallback(Event event, Object handle){
+      var list = callbackMap.get(event);
+      if(list == null)
+            return;
+      for(var callback : list)
+            callback.accept(handle);
+}
+private void setStage(Game.Stage stage){
+      this.stage = stage;
+      callbackMap.getOrDefault(Event.onStageChange, List.of())
+          .forEach(action -> action.accept(ui.getScreen()));
+}
 public void addCallback(Event event, Consumer<Object> callback) {
       var list = callbackMap.getOrDefault(event, new ArrayList<>());
       list.add(callback);
@@ -68,12 +90,14 @@ public void removeCallback(@NotNull Event event, @NotNull Consumer<Object> remov
 
 private void setScreen(ScreenType type) {
       ui.setScreen(type);
-      callbackMap.getOrDefault(Event.OnScreenChange, List.of())
-	  .forEach(action -> action.accept(ui.getScreen()));
+      switch(type){
+            case Game -> setStage(GameProcess);
+            case Settings -> setStage(Game.Stage.Settings);
+            case MainMenu -> setStage(Game.Stage.MainMenu);
+      }
 }
-
 public void init() {
-      stage = Game.Stage.GameProcess;
+      stage = GameProcess;
       setScreen(ScreenType.Game);
 }
 

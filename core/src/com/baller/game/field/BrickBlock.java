@@ -7,7 +7,7 @@ import com.baller.game.SquareCollider;
 import java.util.function.Consumer;
 
 public class BrickBlock extends AnimatedObject {
-public enum Type {Plain, HealBonus, DamageBonus, Killer}
+public enum Type {Plain, HealBonus, DamageBonus, Killer, Destroyed}
 public static int DEFAULT_WIDTH = 100;
 public static int DEFAULT_HEIGHT = 50;
 private Consumer<Object> action;
@@ -26,13 +26,15 @@ private BrickBlock(Texture texture) {
 
 BrickBlock(Texture texture, Type type) {
       this(texture);
-      this.type = type;
+      setType(type);
 }
 public Type getType() {
       return type;
 }
 public void setType(Type type){
       this.type = type;
+      if(type == Type.Destroyed)
+            super.setState(DisplayState.Hidden);
 }
 public void callback() {
       this.action.accept(callable);

@@ -44,6 +44,7 @@ public void deserialize(String serialized) {
 		  index += 1;
 	    }
       } catch (Exception e) {
+	    e.printStackTrace();
 	    isEmpty = true;
       }
 }

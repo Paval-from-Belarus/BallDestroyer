@@ -1,6 +1,6 @@
 #Field's properties
-Ratio=0.700
-Blocks=[HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, Plain, Plain, Plain, Plain, Plain, Plain, DamageBonus, DamageBonus, DamageBonus, DamageBonus, DamageBonus, DamageBonus, Killer, Killer, Killer, Killer, Killer, Killer, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus, HealBonus]
+Ratio=0.300
+Blocks=[Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, DamageBonus, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed]
 
 #Players' properties
 ##Name mapping
@@ -11,9 +11,9 @@ Ignat=>2
 ##Players' configuration
 ###Player
 Id=0
-Score=0
+Score=11
 TrampolineCnt=1
-Balls[{Pos=(x=169,y=65),Velocity=(-60.0,120.0),Radius=25.000}, {Pos=(x=181,y=67),Velocity=(60.0,120.0),Radius=25.000}]
+Balls[{Pos=(x=73,y=166),Velocity=(60.0,-120.0),Radius=25.000}]
 ###Player
 Id=1
 Score=0
@@ -29,5 +29,5 @@ Balls[{Pos=(x=175,y=55),Velocity=(-60.0,120.0),Radius=25.000}, {Pos=(x=175,y=55)
 Resolution=(640.0, 480.0)
 Hardness=0
 SoundLevel=0.3
-SkinName=null
+SkinName=White
 

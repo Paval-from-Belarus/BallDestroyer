@@ -5,19 +5,26 @@ import com.badlogic.gdx.math.Vector2;
 import java.awt.*;
 
 public class SquareCollider implements Collider {
-int width;
-int height;
-Point center;
-//diags
-float a1, b1;
-float a2, b2;
+/**
+ * This enum is used to check the result of collision of side
+ */
+public enum SideType {Top, Right, Bottom, Left, None}
+
+private int width;
+private int height;
+private final Point center;
+private float a1, b1;
+private float a2, b2;
 private Point upper;
 private Point lower;
+private Collider lastCollider;
 
-public SquareCollider(int width, int height) {
+private SquareCollider(int width, int height) {
       this.width = width;
       this.height = height;
       center = new Point(0, 0);
+      upper = new Point(-(width >> 1), (height >> 1));
+      lower = new Point((width >> 1), -(height >> 1));
       updateSides();
 }
 
@@ -26,24 +33,28 @@ public SquareCollider(int width, int height, Point center) {
       move(center);
 }
 
-@Override
-public boolean collides(Collider other) {
-      Side closest = other.getSide(center);
-      return collides(closest.getStart(), closest.getEnd());
+public SideType getCollidedSide(Collider other) {
+      if (other != lastCollider)
+	    return SideType.None;
 }
 
-//@Override
-//public boolean collides(Collider other) {
-//      boolean isCollides = false;
-//      Point[] points = other.getPoints();
-//      for (int i = 0; i < points.length && !isCollides; i++) {
-//	    isCollides = upper.x > points[i].x && lower.x < points[i].x &&
-//			     upper.y > points[i].y && lower.y < points[i].y;
-//
-//      }
-//      return isCollides;
-//}
+@Override
+public boolean collides(Collider square) {
+      if (!(square instanceof SquareCollider))
+	    return false;
+      SquareCollider other = (SquareCollider) square;
+      boolean isCollides = false;
+      Point[] points = other.getPoints();
+      for (int i = 0; i < points.length && !isCollides; i++) {
+	    isCollides = upper.x > points[i].x && lower.x < points[i].x &&
+			     upper.y > points[i].y && lower.y < points[i].y;
+      }
+      return isCollides;
+}
 
+/**
+ * Check collision with any mean defined by two points
+ */
 @Override
 public boolean collides(Point start, Point end) {
       updateSides();
@@ -127,7 +138,11 @@ public Side getSide(Point center) {
 
 @Override
 public void move(Point center) {
-      this.center = center;
+      int offsetX = center().x - center.x;
+      int offsetY = center().y - center.y;
+      this.center.move(center.x, center.y);
+      this.upper.translate(offsetX, offsetY);
+      this.lower.translate(offsetX, offsetY);
       updateSides();
 }
 

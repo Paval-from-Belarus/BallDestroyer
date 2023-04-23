@@ -23,7 +23,7 @@ public static class Properties extends AbstractSerializable<Ball> {
 
       public Properties() {
 	    List<String> patterns = List.of(
-		"Pos=\\((.+)\\)", "Velocity=\\((.+)\\)", "Radius=(.+)"
+		"Pos=\\(([^)]+)\\),", "Velocity=\\(([^)]+)\\),", "Radius=([0-9\\.]+)"
 	    );
 	    List<Consumer<String>> handlers = List.of(
 		this::setPos, this::setVelocity, this::setRadius
@@ -66,7 +66,7 @@ public static class Properties extends AbstractSerializable<Ball> {
       }
 
       private void setPos(String source) {
-	    Matcher matcher = Pattern.compile("(.+), *(.+) *").matcher(source);
+	    Matcher matcher = Pattern.compile("x=(.+), *y=(.+) *").matcher(source);
 	    if (!matcher.find())
 		  throw new IllegalStateException("Incorrect source string");
 	    int x = Integer.parseInt(matcher.group(1));

@@ -122,7 +122,7 @@ private Optional<Player.Properties[]> getPlayers(String source) throws Reflectiv
 
 private Optional<GameField.Properties> getFieldProperties(String source) {
       final Matcher matcher =
-	  Pattern.compile("#Field's properties\n(.+\n)+\n")
+	  Pattern.compile("#Field's properties\n((.+\n)+)\n")
 	      .matcher(source);
       if(!matcher.find())
 	    return Optional.empty();
@@ -137,7 +137,7 @@ private Optional<GameField.Properties> getFieldProperties(String source) {
 }
 
 public Optional<Settings.Properties> getSettings(String content) {
-      Pattern pattern = Pattern.compile("#Settings\n(.+\n)+\n");
+      Pattern pattern = Pattern.compile("#Settings\n((.+\n)+)\n");
       Matcher matcher = pattern.matcher(content);
       if (!matcher.find()) {
 	    return Optional.empty();

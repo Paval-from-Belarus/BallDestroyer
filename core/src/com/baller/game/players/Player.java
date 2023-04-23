@@ -13,6 +13,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class Player {
 public static class Properties extends AbstractSerializable<Player> {
@@ -24,7 +28,7 @@ public static class Properties extends AbstractSerializable<Player> {
       //not set by default
       public Properties() {
 	    List<String> patterns = List.of("Id=(.+)", "Score=(.+)",
-		"TrampolineCnt=(.+)", "Balls=\\[.+\\]");
+		"TrampolineCnt=(.+)", "Balls=\\[(.+)\\]");
 	    List<Consumer<String>> handlers = List.of(
 		this::setId, this::setScore, this::setTrampolineCnt, this::setBalls
 	    );
@@ -55,7 +59,7 @@ public static class Properties extends AbstractSerializable<Player> {
 	    return "Id=" + id.value + "\n" +
 		       "Score=" + score + "\n" +
 		       "TrampolineCnt=" + trampolineCnt + "\n" +
-		       "Balls" + Arrays.toString(balls) + "\n";
+		       "Balls=" + Arrays.toString(balls) + "\n";
       }
 
       @Override
@@ -83,15 +87,24 @@ public static class Properties extends AbstractSerializable<Player> {
       }
 
       private void setBalls(String source) {
-	    var items = TextSerializer.arrayFromString(source, raw -> {
-		  raw = raw.substring(1, raw.length() - 1); //remove curly bracket
+	    String[] patterns = source.split("},?");
+	    if(patterns.length < 2)
+		  throw new IllegalStateException("Impossible to process balls");
+	    Ball.Properties[] balls = new Ball.Properties[patterns.length];
+	    int index = 0;
+	    for(String pattern : patterns){
 		  var props = new Ball.Properties();
-		  props.deserialize(raw);
-		  return props;
-	    });
-	    if (items == null)
-		  throw new IllegalStateException("Impossible to process items");
-	    this.balls = items.toArray(new Ball.Properties[0]);
+		  props.deserialize(pattern + "}"); //last char was removed from pattern
+		  if(!props.isEmpty()){
+			balls[index] = props;
+			index += 1;
+		  }
+	    }
+	    if(index == balls.length){
+		  this.balls = balls;
+	    } else {
+		  throw new IllegalStateException("Impossible to process balls");
+	    }
       }
 }
 
@@ -102,7 +115,7 @@ public static final int DEFAULT_SCORE = 0;
 enum State {Blocked, Alive, Defeated}
 
 public static class Id {
-      private int value;
+      int value;
 
       Id(int value) {
 	    this.value = value;
@@ -159,7 +172,7 @@ public void draw(SpriteBatch batch) {
 	    return;
       //score.draw();
       for (Ball ball : balls) {
-	    System.out.println(ball.getPos());
+//	    System.out.println(ball.getPos());
 	    ball.draw(batch);
       }
 }
@@ -186,7 +199,7 @@ public void dispatch(GameField.Message msg, Ball ball) {
 		  Integer side = (Integer) msg.getValue();
 		  if (side == GameField.BottomSide) {
 			if (balls.size() > 1) {
-			      balls.remove(balls.size() - 1);
+			      balls.remove(ball);
 			} else {
 			      this.state = State.Defeated;
 			      ball.freeze();
@@ -208,6 +221,9 @@ public Properties getProperties() {
 
 public Ball[] getBalls() {
       return balls.toArray(new Ball[0]);
+}
+public void setTrampolineCnt(int trampolineCnt){
+      this.trampolineCnt = trampolineCnt;
 }
 
 public void dispose() {

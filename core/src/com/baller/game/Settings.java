@@ -117,8 +117,8 @@ public static class Properties extends AbstractSerializable<Settings> {
 
       @Override
       public @Nullable Settings construct() {
-	    if (isEmpty())
-		  return null;
+//	    if (isEmpty())
+//		  return null;
 	    Settings parent = new Settings();
 	    parent.setSkin(this.skinName);
 	    parent.setSoundLevel(this.soundLevel);
@@ -128,9 +128,9 @@ public static class Properties extends AbstractSerializable<Settings> {
       }
 
       private void setResolution(String source) throws NumberFormatException {
-	    Pattern pattern = Pattern.compile("\\(([0-9\\.]+),([0-9\\.]+)\\)");
+	    Pattern pattern = Pattern.compile("\\(([0-9\\.]+), *([0-9\\.]+)\\)");
 	    Matcher matcher = pattern.matcher(source);
-	    if (matcher.groupCount() < 2)
+	    if (!matcher.find())
 		  throw new NumberFormatException("Illegal resolution format");
 	    float width = Float.parseFloat(matcher.group(1));
 	    float height = Float.parseFloat(matcher.group(2));
@@ -142,7 +142,7 @@ public static class Properties extends AbstractSerializable<Settings> {
       }
 
       private void setSound(String source) {
-	    this.soundLevel = Integer.parseInt(source);
+	    this.soundLevel = Float.parseFloat(source);
       }
 
       private void setSkin(String source) {
