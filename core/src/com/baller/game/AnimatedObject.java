@@ -3,6 +3,8 @@ package com.baller.game;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 
+import javax.swing.*;
+
 public abstract class AnimatedObject extends RigidObject {
 private static final float[] arrVelocity;
 
@@ -40,7 +42,9 @@ public void setVelocity(VelocityLevel level) {
       this.velocityPlain = updPlain;
       this.velocity.scl(diff);
 }
-
+public Vector2 getVelocity(){
+      return velocity;
+}
 public void reflect(Axis axis) {
       switch (axis) {
 	    case Horizontal -> this.velocity.y *= -1f;

@@ -6,6 +6,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.baller.game.AnimatedObject;
 import com.baller.game.CircleCollider;
 import com.baller.game.Globals;
+import com.baller.game.SquareCollider;
 import com.baller.game.serializer.AbstractSerializable;
 
 import java.awt.Point;
@@ -95,7 +96,8 @@ Ball(Texture texture) {
       setSize(Globals.BALL_SIZE, Globals.BALL_SIZE);
       this.pos = Globals.DEFAULT_BALL_POS.cpy();
       this.velocity = Globals.DEFAULT_BALL_VELOCITY.cpy();
-      this.setCollider(new CircleCollider(Math.max(width >> 1, height >> 1), virtualPos));
+      this.setCollider(new SquareCollider(width, height, virtualPos));
+//      this.setCollider(new CircleCollider(Math.max(width >> 1, height >> 1), virtualPos));
       update(0f);
 }
 

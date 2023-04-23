@@ -116,23 +116,32 @@ public static class Message {
 public static void DefaultDispatcher(Message msg, Ball player) {
       switch (msg.event) {
 	    case BlockCollision -> {
-		  BrickBlock block = (BrickBlock) msg.getValue();
-		  if (block.isVisible()) {
+		  var collision = (BlockCollision) msg.getValue();
+		  BrickBlock block = null;
+		  if (collision.getRef().isVisible()) {
+			block = collision.getRef();
 			block.setType(BrickBlock.Type.Destroyed);
 			block.callback();
-			player.reflect(AnimatedObject.Axis.Horizontal);
+		  }
+		  if (block != null && collision.getSide() != SquareCollider.SideType.None) {
+			var side = collision.getSide();
+			AnimatedObject.Axis axis = (side == SquareCollider.SideType.Left || side == SquareCollider.SideType.Right) ?
+						       AnimatedObject.Axis.Vertical : AnimatedObject.Axis.Horizontal;
+			player.reflect(axis);
 		  }
 	    }
 	    case SideCollision -> {
 		  Integer side = (Integer) msg.getValue();
-		  if (side == TopSide || side == BottomSide) {
+		  if (side == TopSide && player.getVelocity().y > 0) {
 			player.reflect(AnimatedObject.Axis.Horizontal);
-		  } else {
+		  }
+		  if (side == LeftSide || side == RightSide) {
 			player.reflect(AnimatedObject.Axis.Vertical);
 		  }
 	    }
 	    case TrampolineCollision -> {
-		  player.reflect(AnimatedObject.Axis.Horizontal);
+		  if(player.getVelocity().y < 0)
+		  	player.reflect(AnimatedObject.Axis.Horizontal);
 	    }
 	    case Movement -> {
 		  //	  System.out.println("Hello ball!");
@@ -174,7 +183,7 @@ private final Texture textTrampoline;
 }
 
 private GameField() {
-	players = new ArrayList<>();
+      players = new ArrayList<>();
 }
 
 public GameField(Player.Properties[] properties) {
@@ -335,15 +344,17 @@ private int nextTrampolineHeight() {
       }
       return height;
 }
-private void initAllTrampolines(){
+
+private void initAllTrampolines() {
       trampolines = new ArrayList<>();
-      for(Player.Id id : players){
+      for (Player.Id id : players) {
 	    var list = initTrampolines(id);
-	    if(list.size() > 0){
+	    if (list.size() > 0) {
 		  trampolines.addAll(list);
 	    }
       }
 }
+
 private @NotNull List<Trampoline> initTrampolines(Player.Id id) {
       if (nextTrampolineRow >= MAX_TRAMPOLINES_ROW_CNT)
 	    return List.of();
@@ -484,10 +495,7 @@ private boolean isJumper(Ball player) {
       boolean hasCollision = false;
       for (int i = 0; i < trampolines.size() && !hasCollision; i++) {
 	    Collider ramp = trampolines.get(i).collider();
-	    Trampoline trampoline = trampolines.get(i);
-//	    hasCollision = ball.collides(ramp);
-	    hasCollision = (ball.center().y - player.getWidth() / 2 <= ramp.center().y) &&
-			       ((ball.center().x <= ramp.center().x + trampoline.getWidth() / 2) && (ball.center().x >= ramp.center().x - trampoline.getWidth() / 2));
+	    hasCollision = ball.collides(ramp);
       }
       return hasCollision;
 
@@ -511,7 +519,7 @@ private boolean isOutside(Collider body) {
 	    isOutside = body.collides(vertexes[iVertex], vertexes[(iVertex + 1) % vertexes.length]);
 	    iVertex++;
       }
-      lastHandle = Integer.valueOf(side - 1);
+      lastHandle = side - 1;
       return isOutside;
 }
 
@@ -524,8 +532,17 @@ private boolean isDestroyer(Ball player) {
       if (row >= rowCnt)
 	    row -= 1;
       int index = row * this.columnCnt + column;
-      lastHandle = blockList.get(index);
-      return true;
+      boolean response = false;
+      if (index < blockList.size()) {
+	    var brick = blockList.get(index);
+	    if (brick.isVisible() && body.collides(blockList.get(index).collider())) {
+		  var side = ((SquareCollider) brick.collider()).getCollisionSide();
+		  System.out.println(side);
+		  lastHandle = new BlockCollision(brick, side);
+		  response = true;
+	    }
+      }
+      return response;
 }
 
 

@@ -3,6 +3,7 @@ package com.baller.game.players;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.baller.game.AnimatedObject;
+import com.baller.game.field.BlockCollision;
 import com.baller.game.field.BrickBlock;
 import com.baller.game.field.GameField;
 import com.baller.game.DisplayObject.*;
@@ -141,14 +142,14 @@ private Player.State state;
       state = State.Blocked;
       trampolineCnt = DEFAULT_TRAMPOLINE_CNT;
       score = DEFAULT_SCORE;
-      balls = new ArrayList<>(2);
+      balls = new ArrayList<>(1);
 }
 
 Player(Player.Id id) {
       this.id = id;
       balls.add(new Ball(textBall));
-      balls.add(new Ball(textBall));
-      balls.get(1).reflect(AnimatedObject.Axis.Vertical);
+//      balls.add(new Ball(textBall));
+//      balls.get(1).reflect(AnimatedObject.Axis.Vertical);
 }
 
 public Player.Id getId() {
@@ -190,7 +191,8 @@ public void dispatch(GameField.Message msg, Ball ball) {
       Object handle = msg.getValue();
       switch (event) {
 	    case BlockCollision -> {
-		  BrickBlock block = (BrickBlock) handle;
+		  BlockCollision collision = (BlockCollision) msg.getValue();
+		  BrickBlock block = collision.getRef();
 		  if (block != null && block.isVisible()) {
 			score += 1;
 		  }
@@ -208,7 +210,7 @@ public void dispatch(GameField.Message msg, Ball ball) {
 	    }
 	    case EmptyField -> ball.freeze();
       }
-      GameField.DefaultDispatcher(msg, ball);
+	    GameField.DefaultDispatcher(msg, ball);
 }
 
 public boolean isActive() {

@@ -69,7 +69,7 @@ private void initField(float dt) {
       if(field.verify(id)){
 	    players.release(id);
       }
-      field.setRatio(0.3f);
+      field.setRatio(0.8f);
       field.setTrampolineCnt(id, 3);
       players.get(id).ifPresent(player -> player.setTrampolineCnt(3));
       field.rebuild();
@@ -205,6 +205,8 @@ private void renderField(float dt){
       batch.end();
 }
 private void dispatchField(float dt) {
+      final float MAX_DELTA = 0.15f;
+      dt = Math.min(MAX_DELTA, dt);
       for (Player.Properties properties : players.getVerified()) {
 	    Optional<Player> player = players.get(properties.getId());
 	    player.ifPresent(this::dispatchPlayer);
