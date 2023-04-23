@@ -10,9 +10,7 @@ import com.baller.game.DisplayObject.*;
 import com.baller.game.serializer.AbstractSerializable;
 import com.baller.game.serializer.TextSerializer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -89,19 +87,19 @@ public static class Properties extends AbstractSerializable<Player> {
 
       private void setBalls(String source) {
 	    String[] patterns = source.split("},?");
-	    if(patterns.length < 2)
+	    if (patterns.length < 2)
 		  throw new IllegalStateException("Impossible to process balls");
 	    Ball.Properties[] balls = new Ball.Properties[patterns.length];
 	    int index = 0;
-	    for(String pattern : patterns){
+	    for (String pattern : patterns) {
 		  var props = new Ball.Properties();
 		  props.deserialize(pattern + "}"); //last char was removed from pattern
-		  if(!props.isEmpty()){
+		  if (!props.isEmpty()) {
 			balls[index] = props;
 			index += 1;
 		  }
 	    }
-	    if(index == balls.length){
+	    if (index == balls.length) {
 		  this.balls = balls;
 	    } else {
 		  throw new IllegalStateException("Impossible to process balls");
@@ -186,16 +184,37 @@ public void update(float dt) {
 	    ball.update(dt);
 }
 
+private void dispatchBlockEvent(BlockCollision collision) {
+      BrickBlock block = collision.getRef();
+      if (block == null || !block.isVisible())
+	    return;
+      int scoreSum = 1;
+      switch (block.getType()) {
+	    case DamageBonus -> {
+		  scoreSum = -3;
+	    }
+	    case Killer -> {
+		  BrickBlock[] blocks = (BrickBlock[]) collision.callback(block);
+		  if (blocks != null) {
+			for (BrickBlock dummy : blocks) {
+			      dummy.setType(BrickBlock.Type.Destroyed);
+			}
+		  }
+	    }
+	    case MultiTrampoline -> {
+		  collision.callback(new Random().nextInt(2, 4));
+	    }
+      }
+      score += scoreSum;
+}
+
 public void dispatch(GameField.Message msg, Ball ball) {
       GameField.Event event = msg.getEvent();
       Object handle = msg.getValue();
       switch (event) {
 	    case BlockCollision -> {
 		  BlockCollision collision = (BlockCollision) msg.getValue();
-		  BrickBlock block = collision.getRef();
-		  if (block != null && block.isVisible()) {
-			score += 1;
-		  }
+		  dispatchBlockEvent(collision);
 	    }
 	    case SideCollision -> {
 		  Integer side = (Integer) msg.getValue();
@@ -210,7 +229,7 @@ public void dispatch(GameField.Message msg, Ball ball) {
 	    }
 	    case EmptyField -> ball.freeze();
       }
-	    GameField.DefaultDispatcher(msg, ball);
+      GameField.DefaultDispatcher(msg, ball);
 }
 
 public boolean isActive() {
@@ -224,7 +243,8 @@ public Properties getProperties() {
 public Ball[] getBalls() {
       return balls.toArray(new Ball[0]);
 }
-public void setTrampolineCnt(int trampolineCnt){
+
+public void setTrampolineCnt(int trampolineCnt) {
       this.trampolineCnt = trampolineCnt;
 }
 

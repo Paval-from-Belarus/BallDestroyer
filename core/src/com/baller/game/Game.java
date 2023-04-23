@@ -70,7 +70,6 @@ private void initField(float dt) {
 	    players.release(id);
       }
       field.setRatio(0.8f);
-      field.setTrampolineCnt(id, 3);
       players.get(id).ifPresent(player -> player.setTrampolineCnt(3));
       field.rebuild();
       settings.setSkin("White");
@@ -193,10 +192,12 @@ private void changeResolution(Object rawResolution) {
 }
 private void dispatchPlayer(Player player) {
       Ball[] balls = player.getBalls();
+      field.mark(player.getId());
       for (Ball ball : balls) {
 	    GameField.Message msg = field.getMessage(ball);
 	    player.dispatch(msg, ball);
       }
+      field.release();
 }
 private void renderField(float dt){
       batch.begin();

@@ -16,6 +16,7 @@ import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import com.baller.game.serializer.AbstractSerializable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.baller.game.Globals.*;
 
@@ -121,7 +122,6 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 		  if (collision.getRef().isVisible()) {
 			block = collision.getRef();
 			block.setType(BrickBlock.Type.Destroyed);
-			block.callback();
 		  }
 		  if (block != null && collision.getSide() != SquareCollider.SideType.None) {
 			var side = collision.getSide();
@@ -174,16 +174,10 @@ private BrickBlock.Type[] blockTypes;
 private List<Trampoline> trampolines;
 private List<PlayerTrampolines> playerTrampolines;
 private List<Player.Id> players;
-private final Texture textBlock;
-private final Texture textTrampoline;
-
-{
-      textBlock = new Texture("block.png");
-      textTrampoline = new Texture("block.png");
-}
-
+private TexturePool textures;
 private GameField() {
       players = new ArrayList<>();
+      textures = new TexturePool();
 }
 
 public GameField(Player.Properties[] properties) {
@@ -307,7 +301,13 @@ public void checkCollides(Ball ball) {
       }
 
 }
-
+private Player.Id currentPlayer;
+public void mark(Player.Id id){
+      currentPlayer = id;
+}
+public void release(){
+      currentPlayer = null;
+}
 public Message getMessage(Ball ball) {
       Message msg = new Message(Event.Movement);
       if (restBlockCnt == 0) {
@@ -335,7 +335,9 @@ public static final int TRAMPOLINE_MIN_GAP = FIELD_WIDTH / 15;
 public static final int RED_ZONE_BORDER = 40;
 private static int MAX_TRAMPOLINES_ROW_CNT = 1;
 private int nextTrampolineRow = 0;//index
-
+private void resetTrampolineHeight(){
+      nextTrampolineRow = 0;
+}
 private int nextTrampolineHeight() {
       int height = 0;
       if (nextTrampolineRow < MAX_TRAMPOLINES_ROW_CNT) {
@@ -347,6 +349,7 @@ private int nextTrampolineHeight() {
 
 private void initAllTrampolines() {
       trampolines = new ArrayList<>();
+      resetTrampolineHeight();
       for (Player.Id id : players) {
 	    var list = initTrampolines(id);
 	    if (list.size() > 0) {
@@ -370,7 +373,7 @@ private @NotNull List<Trampoline> initTrampolines(Player.Id id) {
 		  count = maxCnt;
 	    batch.clear();
 	    for (int i = 0; i < count; i++) {
-		  batch.add(new Trampoline(textTrampoline));
+		  batch.add(new Trampoline(textures.getTrampoline()));
 	    }
 	    alignTrampolines(batch.list(), nextTrampolineHeight());
 	    list = batch.list();
@@ -391,9 +394,10 @@ private void alignTrampolines(List<Trampoline> trampolines, final int height) {
       }
 }
 
-private BrickBlock.Type nextBrick(int index) {
+private BrickBlock nextBrick (int index){
       int realIndex = index % blockTypes.length;
-      return blockTypes[realIndex];
+      BrickBlock.Type type = blockTypes[realIndex];
+      return new BrickBlock(textures.getBlock(type), type);
 }
 
 public void rebuild() {
@@ -408,9 +412,8 @@ public void rebuild() {
       Point currPos = new Point(START_OFFSET_X, START_OFFSET_Y);
       for (int i = 0; i < rowCnt; i++) {
 	    for (int j = 0; j < columnCnt; j++) {
-		  BrickBlock block = new BrickBlock(textBlock, nextBrick(brickIndex));
+		  BrickBlock block = nextBrick(brickIndex);
 		  block.setPos(currPos.x, currPos.y);
-		  block.setCallback(this::blockCallback, null);
 		  blockList.add(block);
 		  currPos.translate(this.ceilWidth, 0);
 		  brickIndex += 1;
@@ -447,18 +450,19 @@ public Optional<BrickBlock[]> getColumn(BrickBlock block) {
       return Optional.of(result);
 }
 
-public Optional<BrickBlock[]> getRow(BrickBlock block) {
+public @NotNull BrickBlock[] getRow(BrickBlock block) {
       int index = blockList.indexOf(block);
-      if (index == -1)
-	    return Optional.empty();
-      int row = index / this.rowCnt;
-      BrickBlock[] result = new BrickBlock[this.columnCnt];
-      index = row * this.columnCnt;
-      for (int i = 0; i < result.length; i++) {
-	    result[i] = blockList.get(index);
-	    index += 1;
+      BrickBlock[] result = new BrickBlock[0];
+      if(index != -1){
+	    int row = index / this.columnCnt;
+	    result = new BrickBlock[this.columnCnt];
+	    index = row * this.columnCnt;
+	    for (int i = 0; i < result.length; i++) {
+		  result[i] = blockList.get(index);
+		  index += 1;
+	    }
       }
-      return Optional.of(result);
+      return result;
 }
 
 public BrickBlock[] toArray() {
@@ -470,8 +474,7 @@ public Properties getProperty() {
 }
 
 public void dispose() {
-      if (textBlock != null)
-	    textBlock.dispose();
+      textures.dispose();
 }
 
 private void updateParams() {
@@ -538,12 +541,39 @@ private boolean isDestroyer(Ball player) {
 	    if (brick.isVisible() && body.collides(blockList.get(index).collider())) {
 		  var side = ((SquareCollider) brick.collider()).getCollisionSide();
 		  System.out.println(side);
-		  lastHandle = new BlockCollision(brick, side);
+		  BlockCollision collision = new BlockCollision(brick, side);
+		  setBlockCallback(collision, brick.getType());
+		  lastHandle = collision;
 		  response = true;
 	    }
       }
       return response;
 }
-
-
+private @Nullable Player.Id getCurrentPlayer(){
+      return currentPlayer;
+}
+private Timer timer = new Timer();
+private void onTimerEvent(Runnable task, int timeout){
+      timer.schedule(new TimerTask() {	    @Override
+	    public void run() {
+		task.run();
+	    }
+      }, timeout);
+}
+private void setBlockCallback(@NotNull BlockCollision collision, BrickBlock.Type type){
+      switch (type) {
+	    case Killer -> collision.setCallback((o)->getRow((BrickBlock) o));
+	    case MultiTrampoline -> {
+		  Player.Id player = getCurrentPlayer();
+		  if(player != null){
+			collision.setCallback((count->{
+			      this.setTrampolineCnt(player, (Integer)count);
+			      initAllTrampolines();
+			      absorbAll();
+			      return null;
+			}));
+		  }
+	    }
+      }
+}
 }
