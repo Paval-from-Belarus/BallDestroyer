@@ -1,12 +1,9 @@
 package com.baller.game.field;
 
-import com.baller.game.Collider;
-import com.baller.game.SquareCollider;
-import org.jetbrains.annotations.NotNull;
+import com.baller.game.common.SquareCollider;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class BlockCollision {
 private final BrickBlock ref;

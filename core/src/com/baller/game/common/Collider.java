@@ -1,4 +1,4 @@
-package com.baller.game;
+package com.baller.game.common;
 
 import java.awt.*;
 

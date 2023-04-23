@@ -3,10 +3,9 @@ package com.baller.game.players;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
-import com.baller.game.AnimatedObject;
-import com.baller.game.CircleCollider;
+import com.baller.game.common.AnimatedObject;
 import com.baller.game.Globals;
-import com.baller.game.SquareCollider;
+import com.baller.game.common.SquareCollider;
 import com.baller.game.serializer.AbstractSerializable;
 
 import java.awt.Point;

@@ -2,9 +2,7 @@ package com.baller.game.field;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.baller.game.*;
 
 import java.awt.*;
 import java.util.*;
@@ -12,6 +10,10 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.baller.game.common.AnimatedObject;
+import com.baller.game.common.Collider;
+import com.baller.game.common.DisplayObject;
+import com.baller.game.common.SquareCollider;
 import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import com.baller.game.serializer.AbstractSerializable;
@@ -69,8 +71,6 @@ public static class Properties extends AbstractSerializable<GameField> {
 }
 
 public enum Event {BlockCollision, BonusCollision, SideCollision, TrampolineCollision, Movement, EmptyField}
-
-public static final int DEFAULT_TRAMPOLINE_CNT = 1;
 public static final int LeftSide = 1;
 public static final int BottomSide = 2;
 public static final int RightSide = 3;
@@ -79,8 +79,6 @@ public static final int TopSide = 4;
 public static class Message {
       private Object handle;
       private Event event;
-      private Consumer<Object> callback;
-
       private Message(Event event) {
 	    this.event = event;
       }
@@ -91,18 +89,6 @@ public static class Message {
 
       public Event getEvent() {
 	    return this.event;
-      }
-
-      public boolean callback(Object object) {
-	    if (callback != null) {
-		  callback.accept(object);
-		  return true;
-	    }
-	    return false;
-      }
-
-      private void setCallback(Consumer<Object> callback) {
-	    this.callback = callback;
       }
 
       private void setEvent(Event event) {
@@ -140,8 +126,8 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 		  }
 	    }
 	    case TrampolineCollision -> {
-		  if(player.getVelocity().y < 0)
-		  	player.reflect(AnimatedObject.Axis.Horizontal);
+		  if (player.getVelocity().y < 0)
+			player.reflect(AnimatedObject.Axis.Horizontal);
 	    }
 	    case Movement -> {
 		  //	  System.out.println("Hello ball!");
@@ -175,6 +161,7 @@ private List<Trampoline> trampolines;
 private List<PlayerTrampolines> playerTrampolines;
 private List<Player.Id> players;
 private TexturePool textures;
+
 private GameField() {
       players = new ArrayList<>();
       textures = new TexturePool();
@@ -301,13 +288,17 @@ public void checkCollides(Ball ball) {
       }
 
 }
+
 private Player.Id currentPlayer;
-public void mark(Player.Id id){
+
+public void mark(Player.Id id) {
       currentPlayer = id;
 }
-public void release(){
+
+public void release() {
       currentPlayer = null;
 }
+
 public Message getMessage(Ball ball) {
       Message msg = new Message(Event.Movement);
       if (restBlockCnt == 0) {
@@ -335,9 +326,11 @@ public static final int TRAMPOLINE_MIN_GAP = FIELD_WIDTH / 15;
 public static final int RED_ZONE_BORDER = 40;
 private static int MAX_TRAMPOLINES_ROW_CNT = 1;
 private int nextTrampolineRow = 0;//index
-private void resetTrampolineHeight(){
+
+private void resetTrampolineHeight() {
       nextTrampolineRow = 0;
 }
+
 private int nextTrampolineHeight() {
       int height = 0;
       if (nextTrampolineRow < MAX_TRAMPOLINES_ROW_CNT) {
@@ -393,11 +386,16 @@ private void alignTrampolines(List<Trampoline> trampolines, final int height) {
 	    xOffset += pieceSize;
       }
 }
-
-private BrickBlock nextBrick (int index){
+private void onBlockStateChanged(BrickBlock block, BrickBlock.Type type){
+      if(block.getType() != BrickBlock.Type.Destroyed && type == BrickBlock.Type.Destroyed)
+	    restBlockCnt -= 1;
+}
+private BrickBlock nextBlock(int index) {
       int realIndex = index % blockTypes.length;
       BrickBlock.Type type = blockTypes[realIndex];
-      return new BrickBlock(textures.getBlock(type), type);
+      BrickBlock block = new BrickBlock(textures.getBlock(type), type);
+      block.onStateChanged(this::onBlockStateChanged);
+      return block;
 }
 
 public void rebuild() {
@@ -412,7 +410,7 @@ public void rebuild() {
       Point currPos = new Point(START_OFFSET_X, START_OFFSET_Y);
       for (int i = 0; i < rowCnt; i++) {
 	    for (int j = 0; j < columnCnt; j++) {
-		  BrickBlock block = nextBrick(brickIndex);
+		  BrickBlock block = nextBlock(brickIndex);
 		  block.setPos(currPos.x, currPos.y);
 		  blockList.add(block);
 		  currPos.translate(this.ceilWidth, 0);
@@ -453,7 +451,7 @@ public Optional<BrickBlock[]> getColumn(BrickBlock block) {
 public @NotNull BrickBlock[] getRow(BrickBlock block) {
       int index = blockList.indexOf(block);
       BrickBlock[] result = new BrickBlock[0];
-      if(index != -1){
+      if (index != -1) {
 	    int row = index / this.columnCnt;
 	    result = new BrickBlock[this.columnCnt];
 	    index = row * this.columnCnt;
@@ -487,10 +485,6 @@ private void updateParams() {
       this.restBlockCnt = rowCnt * columnCnt;
       if (this.blockTypes == null) //default initializer
 	    this.blockTypes = getRandomBricks(this.restBlockCnt);
-}
-
-private void blockCallback(Object nullable) {
-      this.restBlockCnt -= 1;
 }
 
 private boolean isJumper(Ball player) {
@@ -549,25 +543,19 @@ private boolean isDestroyer(Ball player) {
       }
       return response;
 }
-private @Nullable Player.Id getCurrentPlayer(){
+
+private @Nullable Player.Id getCurrentPlayer() {
       return currentPlayer;
 }
-private Timer timer = new Timer();
-private void onTimerEvent(Runnable task, int timeout){
-      timer.schedule(new TimerTask() {	    @Override
-	    public void run() {
-		task.run();
-	    }
-      }, timeout);
-}
-private void setBlockCallback(@NotNull BlockCollision collision, BrickBlock.Type type){
+
+private void setBlockCallback(@NotNull BlockCollision collision, BrickBlock.Type type) {
       switch (type) {
-	    case Killer -> collision.setCallback((o)->getRow((BrickBlock) o));
+	    case Killer -> collision.setCallback((o) -> getRow((BrickBlock) o));
 	    case MultiTrampoline -> {
 		  Player.Id player = getCurrentPlayer();
-		  if(player != null){
-			collision.setCallback((count->{
-			      this.setTrampolineCnt(player, (Integer)count);
+		  if (player != null) {
+			collision.setCallback((count -> {
+			      this.setTrampolineCnt(player, (Integer) count);
 			      initAllTrampolines();
 			      absorbAll();
 			      return null;

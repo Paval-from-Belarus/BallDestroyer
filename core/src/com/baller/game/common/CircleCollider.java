@@ -1,11 +1,9 @@
-package com.baller.game;
+package com.baller.game.common;
 
 import com.badlogic.gdx.math.Vector2;
+import com.baller.game.common.Collider;
 
 import java.awt.*;
-import java.util.NavigableMap;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 public class CircleCollider implements Collider {
 

@@ -2,20 +2,14 @@ package com.baller.game.players;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.baller.game.AnimatedObject;
 import com.baller.game.field.BlockCollision;
 import com.baller.game.field.BrickBlock;
 import com.baller.game.field.GameField;
-import com.baller.game.DisplayObject.*;
+import com.baller.game.common.DisplayObject.*;
 import com.baller.game.serializer.AbstractSerializable;
-import com.baller.game.serializer.TextSerializer;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 public class Player {
 public static class Properties extends AbstractSerializable<Player> {
@@ -88,7 +82,7 @@ public static class Properties extends AbstractSerializable<Player> {
       private void setBalls(String source) {
 	    String[] patterns = source.split("},?");
 	    if (patterns.length < 2)
-		  throw new IllegalStateException("Impossible to process balls");
+		  System.out.println("Only single ball");
 	    Ball.Properties[] balls = new Ball.Properties[patterns.length];
 	    int index = 0;
 	    for (String pattern : patterns) {
@@ -198,11 +192,12 @@ private void dispatchBlockEvent(BlockCollision collision) {
 		  if (blocks != null) {
 			for (BrickBlock dummy : blocks) {
 			      dummy.setType(BrickBlock.Type.Destroyed);
+			      scoreSum += 1;
 			}
 		  }
 	    }
 	    case MultiTrampoline -> {
-		  collision.callback(new Random().nextInt(2, 4));
+		  collision.callback(new Random().nextInt(1, 4));
 	    }
       }
       score += scoreSum;

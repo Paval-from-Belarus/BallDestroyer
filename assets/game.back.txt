@@ -1,6 +1,6 @@
 #Field's properties
-Ratio=0.300
-Blocks=[Destroyed, DamageBonus, HealBonus, Destroyed, Plain, DamageBonus, Destroyed, Plain, Destroyed, Destroyed, Killer, Destroyed]
+Ratio=0.700
+Blocks=[Plain, Plain, Plain, Killer, Killer, Plain, HealBonus, Plain, DamageBonus, DamageBonus, Plain, Killer, Destroyed, Plain, Killer, HealBonus, Plain, Plain, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed]
 
 #Players' properties
 ##Name mapping
@@ -11,19 +11,19 @@ null=>2
 ##Players' configuration
 ###Player
 Id=0
-Score=6
+Score=5
 TrampolineCnt=3
-Balls=[{Pos=(x=352,y=387),Velocity=(60.0,120.0),Radius=25.000}]
+Balls=[{Pos=(x=38,y=218),Velocity=(-60.0,-120.0),Radius=25.000}]
 ###Player
 Id=1
 Score=0
 TrampolineCnt=1
-Balls=[{Pos=(x=175,y=55),Velocity=(-60.0,120.0),Radius=25.000}, {Pos=(x=175,y=55),Velocity=(60.0,120.0),Radius=25.000}]
+Balls=[{Pos=(x=175,y=155),Velocity=(-60.0,120.0),Radius=25.000}]
 ###Player
 Id=2
 Score=0
 TrampolineCnt=1
-Balls=[{Pos=(x=175,y=55),Velocity=(-60.0,120.0),Radius=25.000}, {Pos=(x=175,y=55),Velocity=(60.0,120.0),Radius=25.000}]
+Balls=[{Pos=(x=175,y=155),Velocity=(-60.0,120.0),Radius=25.000}]
 
 #Settings
 Resolution=(640.0, 480.0)

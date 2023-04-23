@@ -1,14 +1,10 @@
 package com.baller.game.uicomponents;
 
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
-import com.baller.game.DisplayObject;
-import org.w3c.dom.Text;
-
-import java.util.List;
+import com.baller.game.common.DisplayObject;
 
 public abstract class UIComponent extends DisplayObject {
 private Array<Actor> actors;

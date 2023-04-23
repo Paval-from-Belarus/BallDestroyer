@@ -1,9 +1,9 @@
-package com.baller.game;
+package com.baller.game.common;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.baller.game.Globals;
 
 import java.awt.*;
 

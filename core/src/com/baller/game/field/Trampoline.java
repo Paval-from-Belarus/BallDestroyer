@@ -1,9 +1,8 @@
 package com.baller.game.field;
 
 import com.badlogic.gdx.graphics.Texture;
-import com.baller.game.AnimatedObject;
-import com.baller.game.Globals;
-import com.baller.game.SquareCollider;
+import com.baller.game.common.AnimatedObject;
+import com.baller.game.common.SquareCollider;
 
 public class Trampoline extends AnimatedObject {
 public static final int DEFAULT_WIDTH = 120;

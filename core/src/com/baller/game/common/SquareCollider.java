@@ -1,4 +1,4 @@
-package com.baller.game;
+package com.baller.game.common;
 
 import com.badlogic.gdx.math.Vector2;
 

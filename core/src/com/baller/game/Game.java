@@ -69,7 +69,7 @@ private void initField(float dt) {
       if(field.verify(id)){
 	    players.release(id);
       }
-      field.setRatio(0.8f);
+      field.setRatio(0.3f);
       players.get(id).ifPresent(player -> player.setTrampolineCnt(3));
       field.rebuild();
       settings.setSkin("White");

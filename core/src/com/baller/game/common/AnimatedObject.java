@@ -1,9 +1,9 @@
-package com.baller.game;
+package com.baller.game.common;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
-
-import javax.swing.*;
+import com.baller.game.Globals;
+import com.baller.game.common.RigidObject;
 
 public abstract class AnimatedObject extends RigidObject {
 private static final float[] arrVelocity;
