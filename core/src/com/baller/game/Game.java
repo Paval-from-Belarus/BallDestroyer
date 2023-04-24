@@ -197,6 +197,7 @@ private void dispatchPlayer(Player player) {
 	    GameField.Message msg = field.getMessage(ball);
 	    player.dispatch(msg, ball);
       }
+      controller.setScore(player.getScore());
       field.release();
 }
 private void renderField(float dt){

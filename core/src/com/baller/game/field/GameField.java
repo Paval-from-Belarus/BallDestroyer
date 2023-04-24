@@ -301,6 +301,7 @@ public void release() {
 
 public Message getMessage(Ball ball) {
       Message msg = new Message(Event.Movement);
+      System.out.println(restBlockCnt);
       if (restBlockCnt == 0) {
 	    msg.setEvent(Event.EmptyField);
 	    return msg;
@@ -404,6 +405,7 @@ public void rebuild() {
 	    blockList.clear();
       else
 	    blockList = new ArrayList<>(rowCnt * columnCnt);
+      this.restBlockCnt = 0;
       int brickIndex = 0;
       int START_OFFSET_X = (columnGap >> 1) + (BrickBlock.DEFAULT_WIDTH >> 1);
       int START_OFFSET_Y = FIELD_HEIGHT - ((rowGap >> 1) + (BrickBlock.DEFAULT_HEIGHT >> 1));
@@ -411,6 +413,8 @@ public void rebuild() {
       for (int i = 0; i < rowCnt; i++) {
 	    for (int j = 0; j < columnCnt; j++) {
 		  BrickBlock block = nextBlock(brickIndex);
+		  if(block.isVisible())
+			restBlockCnt += 1;
 		  block.setPos(currPos.x, currPos.y);
 		  blockList.add(block);
 		  currPos.translate(this.ceilWidth, 0);
@@ -482,9 +486,8 @@ private void updateParams() {
       this.columnGap = (TABLE_HEIGHT % BrickBlock.DEFAULT_HEIGHT) / this.rowCnt;
       this.ceilHeight = BrickBlock.DEFAULT_HEIGHT + (this.columnGap);
       this.ceilWidth = BrickBlock.DEFAULT_WIDTH + (this.rowGap);
-      this.restBlockCnt = rowCnt * columnCnt;
       if (this.blockTypes == null) //default initializer
-	    this.blockTypes = getRandomBricks(this.restBlockCnt);
+	    this.blockTypes = getRandomBricks(rowCnt * columnCnt);
 }
 
 private boolean isJumper(Ball player) {

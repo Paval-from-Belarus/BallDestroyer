@@ -17,7 +17,7 @@ public class GameController {
 /**<code>OnScreenChange</code> event corrupted when user change current menu. In this case, handle object
  * is <code>UserInterface.ScreenType</code>
  * */
-public enum Event {OnResolutionChange, onStageChange, OnProgressSave, OnProgressRestore,OnSkinChange, OnProgramExit}
+public enum Event {OnResolutionChange, onStageChange, OnProgressSave, OnProgressRestore, OnSkinChange, OnProgramExit}
 
 private Game.Stage stage;
 private UserInterface ui;
@@ -26,23 +26,25 @@ private Object lastHandle;
 
 GameController() {
       callbackMap = new HashMap<>();
-      ui = new UserInterface(this);
+      ui = new UserInterface();
 }
 
 public void setViewport(Viewport port) {
       ui.setViewport(port);
 }
-
+public void setScore(Integer score){
+      ui.setComponent(UserClick.Id.LBL_GAME_SCORE, score);
+}
 public void dispatchInput() {
-      List<UserClick> clicks = ui.getUserClick();
-      for (UserClick click : clicks) {
-            var event = convertClick(click);
+      List<UserClick.Id> clicks = ui.getUserClick();
+      for (UserClick.Id id : clicks) {
+            var event = convertClick(id);
             event.ifPresent(self -> throughCallback(self, null));
       }
 }
-private Optional<Event> convertClick(UserClick click){
+private Optional<Event> convertClick(UserClick.Id id){
       Optional<Event> result = Optional.empty();
-      switch(click.getId()){
+      switch(id){
             case BTN_GAME_PAUSE -> setStage(GamePause);
             case BTN_GAME_RESUME -> setStage(GameProcess);
             case BTN_GAME_SAVE -> result = Optional.of(Event.OnProgressSave);

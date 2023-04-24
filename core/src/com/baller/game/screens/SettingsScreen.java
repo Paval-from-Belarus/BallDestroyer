@@ -1,8 +1,12 @@
 package com.baller.game.screens;
 
 import com.badlogic.gdx.Screen;
+import com.baller.game.UserInterface;
 
-public class SettingsScreen implements Screen {
+import java.util.List;
+import java.util.Map;
+
+public class SettingsScreen implements ClickScreen {
     @Override
     public void show() {
 
@@ -37,4 +41,14 @@ public class SettingsScreen implements Screen {
     public void dispose() {
 
     }
+
+@Override
+public List<UserInterface.UserClick> getAll() {
+    return null;
+}
+
+@Override
+public void acceptClicks(Map<UserInterface.UserClick.Id, UserInterface.UserClick> mapper) {
+
+}
 }

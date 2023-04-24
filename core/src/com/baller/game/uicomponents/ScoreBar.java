@@ -15,6 +15,7 @@ import com.baller.game.Globals;
 import com.baller.game.UserInterface;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class ScoreBar extends UIComponent {
 private static final String TITLE_TEXT = "Score";
@@ -27,9 +28,11 @@ private final Button pause;
 private Integer score;
 private final Skin skin;
 private Texture background;
+
 {
       background = new Texture("block.png");
 }
+
 public ScoreBar(Skin skin) {
       super();
       setTexture(background);
@@ -49,36 +52,46 @@ private void setTitle() {
       title.setAlignment(Align.left);
       title.setFontScale(2f, 2f);
       title.setPosition(
-          Globals.convertWidth(xOffset),
-          Globals.convertHeight(yOffset)
+	  Globals.convertWidth(xOffset),
+	  Globals.convertHeight(yOffset)
       );
       addActor(title);
 }
 
-private final static int  BUTTON_WIDTH = 50;
+private final static int BUTTON_WIDTH = 50;
 private final static int BUTTON_HEIGHT = 50;
-private void setPauseButton(){
+
+private void setPauseButton() {
       final int xOffset = getPos().x + getWidth() / 2 - getWidth() / 5;
       final int yOffset = getPos().y - BUTTON_HEIGHT / 2;
       pause.setSize(
-          Globals.convertWidth(BUTTON_WIDTH),
-          Globals.convertHeight(BUTTON_HEIGHT)
+	  Globals.convertWidth(BUTTON_WIDTH),
+	  Globals.convertHeight(BUTTON_HEIGHT)
       );
       pause.setPosition(
-          Globals.convertWidth(xOffset),
-          Globals.convertHeight(yOffset)
+	  Globals.convertWidth(xOffset),
+	  Globals.convertHeight(yOffset)
       );
       addActor(pause);
 }
-public void addPauseListener(EventListener listener){
-      pause.addListener(new ClickListener(){
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                  listener.handle(event);
-            }
+
+public void addPauseListener(EventListener listener) {
+      pause.addListener(new ClickListener() {
+	    @Override
+	    public void clicked(InputEvent event, float x, float y) {
+		  listener.handle(event);
+	    }
       });
 }
-public void dispose(){
+
+/**
+ * rocks accept any value that will used to show current score. Current score will in form of Integer
+ */
+public void onScoreChanged(Consumer<Consumer<Object>> rocks) {
+      rocks.accept(score -> title.setText((Integer) score));
+}
+
+public void dispose() {
       background.dispose();
 }
 }

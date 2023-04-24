@@ -189,10 +189,10 @@ private void dispatchBlockEvent(BlockCollision collision) {
 	    }
 	    case Killer -> {
 		  BrickBlock[] blocks = (BrickBlock[]) collision.callback(block);
+		  scoreSum = 3;
 		  if (blocks != null) {
 			for (BrickBlock dummy : blocks) {
 			      dummy.setType(BrickBlock.Type.Destroyed);
-			      scoreSum += 1;
 			}
 		  }
 	    }
@@ -241,6 +241,9 @@ public Ball[] getBalls() {
 
 public void setTrampolineCnt(int trampolineCnt) {
       this.trampolineCnt = trampolineCnt;
+}
+public int getScore(){
+      return score;
 }
 
 public void dispose() {

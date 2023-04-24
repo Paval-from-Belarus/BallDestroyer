@@ -4,15 +4,22 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
+import com.baller.game.UserInterface;
 import com.baller.game.common.DisplayObject;
 
+import static com.baller.game.UserInterface.*;
+
 public abstract class UIComponent extends DisplayObject {
-private Array<Actor> actors;
+private final Array<Actor> actors;
 {
       actors = new Array<>();
 }
-protected UIComponent() {super();}
-protected UIComponent(Texture texture){super(texture);}
+protected UIComponent() {
+      super();
+}
+protected UIComponent(Texture texture){
+      super(texture);
+}
 protected void addActor(Actor actor){
       actors.add(actor);
 }
