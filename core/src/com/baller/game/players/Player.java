@@ -66,6 +66,11 @@ public static class Properties extends AbstractSerializable<Player> {
 	    return owner;
       }
 
+      @Override
+      public String[] getFieldNames() {
+	    return new String[]{"trampolineCnt", "id", "score", "balls"};
+      }
+
       private void setScore(String source) {
 	    this.score = Integer.parseInt(source);
       }
@@ -120,6 +125,10 @@ public static class Id {
 		  return ((Player.Id) other).value == this.value;
 	    return false;
       }
+      @Override
+      public String toString(){
+	    return String.valueOf(value);
+      }
 }
 
 private ArrayList<Ball> balls;
@@ -130,7 +139,7 @@ private int trampolineCnt;
 private Player.State state;
 
 {
-      textBall = new Texture("badlogic.jpg");
+      textBall = new Texture("red_ball.png");
       state = State.Blocked;
       trampolineCnt = DEFAULT_TRAMPOLINE_CNT;
       score = DEFAULT_SCORE;
@@ -195,9 +204,12 @@ private void dispatchBlockEvent(BlockCollision collision) {
 			      dummy.setType(BrickBlock.Type.Destroyed);
 			}
 		  }
+		  block.setType(BrickBlock.Type.Plain);
 	    }
 	    case MultiTrampoline -> {
-		  collision.callback(new Random().nextInt(1, 4));
+		  int trampolineCnt = new Random().nextInt(1, 4);
+		  collision.callback(trampolineCnt);
+		  this.trampolineCnt = trampolineCnt;
 	    }
       }
       score += scoreSum;

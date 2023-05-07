@@ -49,6 +49,7 @@ private Optional<Event> convertClick(UserClick.Id id){
             case BTN_GAME_RESUME -> setStage(GameProcess);
             case BTN_GAME_SAVE -> result = Optional.of(Event.OnProgressSave);
             case BTN_GAME_RESTORE -> result = Optional.of(Event.OnProgressRestore);
+            case UI_RESOLUTION -> result = Optional.of(Event.OnResolutionChange);
       }
       return result;
 }

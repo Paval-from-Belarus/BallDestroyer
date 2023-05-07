@@ -6,7 +6,6 @@ import com.baller.game.players.Player;
 import com.baller.game.field.GameField;
 import com.baller.game.players.Players;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +17,18 @@ import java.util.*;
 
 public class Serializer {
 
+public GameField getGameField() {
+      return gameField;
+}
+
+public Players getPlayers() {
+      return rawPlayers;
+}
+
+public Settings getSettings() {
+      return rawSettings;
+}
+
 public enum SerializationMode {Json, Text}
 
 public static final String DEFAULT_NAME = "game.back";
@@ -26,6 +37,10 @@ public Player.Properties[] players;
 public Map<Integer, String> nameMapper;
 public Settings.Properties settings;
 public String configPath;
+
+private GameField gameField;
+private Players rawPlayers;
+private Settings rawSettings;
 
 private void setPlayersProps(Players players) throws NoSuchFieldException, IllegalAccessException {
       Player.Properties[] properties = players.getAll();
@@ -63,16 +78,19 @@ private void setPlayerMapper(Players players) throws NoSuchFieldException, Illeg
 public Serializer setPlayers(Players players) throws NoSuchFieldException, IllegalAccessException {
       setPlayersProps(players);
       setPlayerMapper(players);
+      this.rawPlayers = players;
       return this;
 }
 
 public Serializer setGameField(GameField field) {
-      this.field = field.getProperty();
+      this.field = field.serialize();
+      this.gameField = field;
       return this;
 }
 
 public Serializer setSettings(Settings settings) {
       this.settings = settings.serializer();
+      this.rawSettings = settings;
       return this;
 }
 

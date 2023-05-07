@@ -1,12 +1,17 @@
 package com.baller.game.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.maps.tiled.renderers.IsometricTiledMapRenderer;
 import com.badlogic.gdx.scenes.scene2d.Event;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.baller.game.Globals;
 import com.baller.game.uicomponents.PopupMenu;
 import com.baller.game.uicomponents.ScoreBar;
 import com.baller.game.UserInterface.*;
@@ -43,6 +48,7 @@ public GameScreen(Skin skin, Viewport port) {
       menu.addResumeListener(this::onResumeButtonClicked);
       menu.addSaveListener(this::onSaveButtonClicked);
       menu.addRestoreListener(this::onRestoreButtonClicked);
+      menu.addResolutionListener(this::onResolutionChanged);
 }
 
 private void bubblesClick(UserClick.Id id){
@@ -69,6 +75,11 @@ private boolean onSaveButtonClicked(Event event) {
 private boolean onRestoreButtonClicked(Event event) {
       bubblesClick(Id.BTN_GAME_RESTORE);
       return true;
+}
+private void onResolutionChanged(Integer index){
+      bubblesClick(Id.UI_RESOLUTION);
+      Globals.CURR_SCREEN_INDEX = index;
+      System.out.println(index);
 }
 
 @Override

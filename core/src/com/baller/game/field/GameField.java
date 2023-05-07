@@ -2,6 +2,7 @@ package com.baller.game.field;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import java.awt.*;
@@ -67,6 +68,10 @@ public static class Properties extends AbstractSerializable<GameField> {
 	    this.blocks = Arrays.stream(items)
 			      .map(BrickBlock.Type::valueOf)
 			      .toArray(BrickBlock.Type[]::new);
+      }
+      @Override
+      public String[] getFieldNames(){
+	return new String[]{"ratio", "blocks"};
       }
 }
 
@@ -161,10 +166,12 @@ private List<Trampoline> trampolines;
 private List<PlayerTrampolines> playerTrampolines;
 private List<Player.Id> players;
 private TexturePool textures;
+private Background background;
 
 private GameField() {
       players = new ArrayList<>();
       textures = new TexturePool();
+      background = new Background(textures.getFieldBGD());
 }
 
 public GameField(Player.Properties[] properties) {
@@ -179,7 +186,6 @@ public void addPlayers(Player.Properties[] properties) {
 			      .map(player -> new PlayerTrampolines(player.getId(), player.getTrampolineCnt()))
 			      .collect(Collectors.toList());
 }
-
 /**
  * @return verify as much players as possible
  */
@@ -259,6 +265,7 @@ private void updateTrampoline(Trampoline trampoline) {
 }
 
 public void draw(final SpriteBatch batch) {
+      background.draw(batch);
       drawables.forEach(item -> item.draw(batch));
 }
 
@@ -388,8 +395,10 @@ private void alignTrampolines(List<Trampoline> trampolines, final int height) {
       }
 }
 private void onBlockStateChanged(BrickBlock block, BrickBlock.Type type){
-      if(block.getType() != BrickBlock.Type.Destroyed && type == BrickBlock.Type.Destroyed)
+      if (block.getType() != BrickBlock.Type.Destroyed && type == BrickBlock.Type.Destroyed)
 	    restBlockCnt -= 1;
+      if (block.getType() == BrickBlock.Type.Destroyed && type != BrickBlock.Type.Destroyed)
+	    restBlockCnt += 1;
 }
 private BrickBlock nextBlock(int index) {
       int realIndex = index % blockTypes.length;
@@ -407,6 +416,7 @@ public void rebuild() {
 	    blockList = new ArrayList<>(rowCnt * columnCnt);
       this.restBlockCnt = 0;
       int brickIndex = 0;
+//      int START_OFFSET_X = (FIELD_WIDTH - TABLE_WIDTH) / 2 + (BrickBlock.DEFAULT_WIDTH >> 1);
       int START_OFFSET_X = (columnGap >> 1) + (BrickBlock.DEFAULT_WIDTH >> 1);
       int START_OFFSET_Y = FIELD_HEIGHT - ((rowGap >> 1) + (BrickBlock.DEFAULT_HEIGHT >> 1));
       Point currPos = new Point(START_OFFSET_X, START_OFFSET_Y);
@@ -471,7 +481,7 @@ public BrickBlock[] toArray() {
       return blockList.toArray(new BrickBlock[0]);
 }
 
-public Properties getProperty() {
+public Properties serialize() {
       return new Properties(this);
 }
 

@@ -17,4 +17,5 @@ public interface Serializable<T>{
       void deserialize(String serialized);
       boolean isEmpty();
       T construct();
+      String[] getFieldNames();
 }

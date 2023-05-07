@@ -20,18 +20,37 @@ import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import com.baller.game.players.Players;
 import com.baller.game.serializer.Serializer;
+import org.jetbrains.annotations.Nullable;
 
 public class Game extends com.badlogic.gdx.Game {
 public enum Stage {GameProcess, Settings, MainMenu, GamePause}
 public enum HardnessLevel {Easy, Hard, Mad}
+public enum ResolutionMode {
+      Small, Broad, Full;
+      private Point mode;
+
+      static {
+	    Small.mode = new Point(640, 480);
+	    Broad.mode = new Point(1024, 768);
+	    Full.mode = Broad.mode;
+      }
+
+      public int width() {
+	    return mode.x;
+      }
+
+      public int height() {
+	    return mode.y;
+      }
+}
+public static final float DEFAULT_FIELD_RATIO = 0.5f;
 public static SpriteBatch batch;
-Players players;
-GameField field;
-Settings settings;
-GameController controller;
+private Players players;
+private GameField field;
+private Settings settings;
+private GameController controller;
 private Viewport viewport;
 private Consumer<Float> renderHandler;
-
 private AtomicBoolean isActive;
 private AtomicBoolean isFieldCreated;
 
@@ -48,14 +67,15 @@ public void create() {
       initController();
       initSettings();
 }
-private void initSettings(){
-      settings = new Settings(Globals.FIELD_WIDTH, Globals.FIELD_HEIGHT);
-      settings.setResolution(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-      settings.setHardness(HardnessLevel.Easy.ordinal());
-      settings.setSoundLevel(0.3f);
+
+private void initSettings() {
+      settings = new Settings(ResolutionMode.Small);
+      settings.setHardness(HardnessLevel.Easy);
+      settings.setSoundLevel(DEFAULT_FIELD_RATIO);
 }
+
 private void initField(float dt) {
-      if(isFieldCreated.get()){
+      if (isFieldCreated.get()) {
 	    renderHandler = this::dispatchField;
 	    return;
       }
@@ -66,11 +86,10 @@ private void initField(float dt) {
       list.add(players.add("Ivan"));
       list.add(players.add("Ignat"));
       field = new GameField(players.getAll());
-      if(field.verify(id)){
+      if (field.verify(id)) {
 	    players.release(id);
       }
-      field.setRatio(0.3f);
-      players.get(id).ifPresent(player -> player.setTrampolineCnt(3));
+      field.setRatio(DEFAULT_FIELD_RATIO);
       field.rebuild();
       settings.setSkin("White");
       isFieldCreated.set(true);
@@ -81,35 +100,43 @@ private void initField(float dt) {
  * @return not empty Serializer if it exist
  * At another way, return empty
  * This convention is applicable for save method
- * */
-private Optional<Serializer> findSavedGame(){
+ */
+private Optional<Serializer> findSavedGame() {
       File jsonBack = Settings.getJsonBackPath().toFile();
       File txtBack = Settings.getTxtBackPath().toFile();
       Serializer serializer = new Serializer();
-      if(txtBack.exists() && serializer.fromFile(txtBack.getAbsolutePath(), Serializer.SerializationMode.Text)){
+      if (txtBack.exists() && serializer.fromFile(txtBack.getAbsolutePath(), Serializer.SerializationMode.Text)) {
 	    return Optional.of(serializer);
       }
-      if(jsonBack.exists() && serializer.fromFile(jsonBack.getAbsolutePath(), Serializer.SerializationMode.Json)){
+      if (jsonBack.exists() && serializer.fromFile(jsonBack.getAbsolutePath(), Serializer.SerializationMode.Json)) {
 	    return Optional.of(serializer);
       }
       return Optional.empty();
 }
-private void load(Object handle){
+
+private void load(Object handle) {
       var serializer = findSavedGame();
       serializer.ifPresentOrElse(s -> {
 	    this.field = s.field.construct();
 	    this.field.addPlayers(s.players);
 	    this.players = new Players(s.players, s.nameMapper);
-	    if(this.field.verify(s.players[0].getId())){
+	    if (this.field.verify(s.players[0].getId())) {
 		  players.release(s.players[0].getId());
 	    }
 	    this.field.rebuild();
 	    this.settings = s.settings.construct();
+	    if (this.settings != null) {
+		  changeResolution(settings.getResolution());
+		  changeGameMode(settings.getHardness());
+	    }
 	    isFieldCreated.set(true);
+	    controller.removeCallback(Event.OnProgressSave, this::load);
       }, () -> System.out.println("NO CONFIG FILE"));
 }
-/**@param handle is any handle that will be skipped
- * */
+
+/**
+ * @param handle is any handle that will be skipped
+ */
 private void save(Object handle) {
       Serializer serializer = new Serializer();
       Thread executor;
@@ -136,7 +163,8 @@ private void save(Object handle) {
 	  );
 }
 
-private void defaultRenderHandler(float dt) {}
+private void defaultRenderHandler(float dt) {
+}
 
 private void freezeField(float dt) {
       renderHandler = this::renderField;
@@ -152,6 +180,7 @@ public Supplier<Boolean> guardRuler(Supplier<Boolean> handle) {
 	    return handle.get();
       };
 }
+
 private void pauseHandler(Object rawScreen) {
       if (controller.getStage() != Stage.GamePause) {
 	    controller.removeCallback(Event.onStageChange, this::pauseHandler);
@@ -174,8 +203,8 @@ private void onApplicationExit(Object handle) {
 }
 
 private void onChangeStage(Object rawScreen) {
-      if(super.screen != rawScreen)
-      	super.setScreen(((Screen) rawScreen));
+      if (super.screen != rawScreen)
+	    super.setScreen(((Screen) rawScreen));
       switch (controller.getStage()) {
 	    case GameProcess -> renderHandler = this::initField;
 	    case GamePause -> renderHandler = this::freezeField;
@@ -185,11 +214,29 @@ private void onChangeStage(Object rawScreen) {
 	    }
       }
 }
+private void changeGameMode(@Nullable Object rawMode){
 
-private void changeResolution(Object rawResolution) {
-      Point resolution = (Point) rawResolution;
-      settings.setResolution(resolution.x, resolution.y);
 }
+private void changeFieldRatio(@Nullable Object value) {
+
+}
+private void changeResolution(@Nullable Object rawMode) {
+      ResolutionMode mode;
+      if (rawMode != null) {
+	    mode = (ResolutionMode) rawMode;
+	    Globals.CURR_SCREEN_INDEX = mode.ordinal();
+      }
+      else {
+	    mode = ResolutionMode.values()[Globals.CURR_SCREEN_INDEX];
+      }
+      if (mode != ResolutionMode.Full) {
+	    Gdx.graphics.setWindowedMode(mode.width(), mode.height());
+      } else {
+	    Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+      }
+      settings.setResolution(mode);
+}
+
 private void dispatchPlayer(Player player) {
       Ball[] balls = player.getBalls();
       field.mark(player.getId());
@@ -200,12 +247,14 @@ private void dispatchPlayer(Player player) {
       controller.setScore(player.getScore());
       field.release();
 }
-private void renderField(float dt){
+
+private void renderField(float dt) {
       batch.begin();
       field.draw(batch);
       players.draw(batch);
       batch.end();
 }
+
 private void dispatchField(float dt) {
       final float MAX_DELTA = 0.15f;
       dt = Math.min(MAX_DELTA, dt);

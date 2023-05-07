@@ -1,9 +1,12 @@
 package com.baller.game.uicomponents;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -80,6 +83,15 @@ public void addPauseListener(EventListener listener) {
 	    @Override
 	    public void clicked(InputEvent event, float x, float y) {
 		  listener.handle(event);
+	    }
+	    @Override
+	    public boolean keyDown(InputEvent event, int keycode) {
+		  boolean response = false;
+		  if(keycode == Input.Keys.ESCAPE){
+			listener.handle(event);
+			response = true;
+		  }
+		  return response;
 	    }
       });
 }

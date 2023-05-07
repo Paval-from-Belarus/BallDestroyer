@@ -1,20 +1,13 @@
 package com.baller.game;
 
 import com.baller.game.serializer.AbstractSerializable;
-import com.baller.game.serializer.Serializable;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
 import java.nio.file.Path;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
+import static com.baller.game.Game.*;
 
 //import com.google.gson.Gson;
 public class Settings {
@@ -27,17 +20,15 @@ public static Path getTxtBackPath(){
       return Path.of(TEXT_BACK_FILE);
 }
 private Settings() {
-      resolution = new Resolution(0, 0);
 }
-public Settings(float width, float height) {
-      this();
-      setResolution(width, height);
+public Settings(ResolutionMode mode) {
+      setResolution(mode);
 }
-public void setResolution(float width, float height) {
-      this.resolution.update(width, height);
+public void setResolution(ResolutionMode mode) {
+      this.resolution = mode;
 }
 
-public void setHardness(int level) {
+public void setHardness(HardnessLevel level) {
       this.hardness = level;
 }
 
@@ -54,34 +45,23 @@ public void setSoundLevel(float level) {
 	    throw new IllegalArgumentException("Incorrect sound level");
       this.soundLevel = level;
 }
-
+public float getSoundLevel(){
+      return soundLevel;
+}
+public HardnessLevel getHardness(){
+      return hardness;
+}
+public ResolutionMode getResolution(){
+      return resolution;
+}
 public Properties serializer() {
       return new Properties(this);
-}
-public static class Resolution {
-      public float width;
-      public float height;
-
-      Resolution(float width, float height) {
-	    this.width = width;
-	    this.height = height;
-      }
-
-      private void update(float width, float height) {
-	    this.width = width;
-	    this.height = height;
-      }
-
-      @Override
-      public String toString() {
-	    return "(" + width + ", " + height + ")";
-      }
 }
 
 public static class Properties extends AbstractSerializable<Settings> {
       private float soundLevel;
-      private int hardness;
-      private Resolution resolution;
+      private HardnessLevel hardness;
+      private ResolutionMode resolution;
       private String skinName;
 
       public Properties() {
@@ -122,23 +102,22 @@ public static class Properties extends AbstractSerializable<Settings> {
 	    Settings parent = new Settings();
 	    parent.setSkin(this.skinName);
 	    parent.setSoundLevel(this.soundLevel);
-	    parent.setResolution(this.resolution.width, this.resolution.height);
+	    parent.setResolution(this.resolution);
 	    parent.setHardness(this.hardness);
 	    return parent;
       }
 
+      @Override
+      public String[] getFieldNames() {
+	    return new String[]{"soundLevel", "hardness", "resolution", "skinName"};
+      }
+
       private void setResolution(String source) throws NumberFormatException {
-	    Pattern pattern = Pattern.compile("\\(([0-9\\.]+), *([0-9\\.]+)\\)");
-	    Matcher matcher = pattern.matcher(source);
-	    if (!matcher.find())
-		  throw new NumberFormatException("Illegal resolution format");
-	    float width = Float.parseFloat(matcher.group(1));
-	    float height = Float.parseFloat(matcher.group(2));
-	    this.resolution = new Resolution(width, height);
+	    this.resolution = ResolutionMode.valueOf(source);
       }
 
       private void setHardness(String source) {
-	    this.hardness = Integer.parseInt(source);
+	    this.hardness = HardnessLevel.valueOf(source);
       }
 
       private void setSound(String source) {
@@ -151,8 +130,8 @@ public static class Properties extends AbstractSerializable<Settings> {
 }
 
 private float soundLevel;
-private int hardness;
-private final Resolution resolution;
+private HardnessLevel hardness;
+private ResolutionMode resolution;
 private String skinName;
 
 }

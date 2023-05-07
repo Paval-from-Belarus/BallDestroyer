@@ -1,15 +1,12 @@
 package com.baller.game.serializer;
 
 import com.baller.game.Settings;
-import com.baller.game.field.BrickBlock;
 import com.baller.game.field.GameField;
-import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.nio.file.OpenOption;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -18,10 +15,29 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TextSerializer {
-private String serializeField(GameField.Properties props) {
-      return "#Field's properties\n" + props.serialize() + "\n";
+private String collectFields(Serializable<?> serializable) throws IllegalAccessException {
+      String[] labels = serializable.getFieldNames();
+      Field[] fields = serializable.getClass().getDeclaredFields();
+      StringBuilder strText = new StringBuilder();
+      int index = 0;
+      for(Field field : fields){
+	    if(index >= labels.length)
+		  break;
+	    if(field.getName().equals(labels[index])){
+		  field.setAccessible(true);
+		  var instance = field.get(serializable);
+		  strText.append(instance.toString());
+	    }
+	    index += 1;
+      }
+      return strText.toString();
 }
-private String serializePlayers(Player.Properties[] properties, Map<Integer, String> nameMapper) throws NoSuchFieldException, IllegalAccessException {
+private String serializeField(GameField field) throws IllegalAccessException {
+      	String fieldString = collectFields(field.serialize());
+	return "#Field's properties\n" + fieldString;
+}
+
+private String serializePlayers(Player.Properties[] players, Map<Integer, String> nameMapper) throws NoSuchFieldException, IllegalAccessException {
       StringBuilder strText = new StringBuilder();
       strText.append("#Players' properties\n");
       strText.append("##Name mapping\n");
@@ -32,17 +48,16 @@ private String serializePlayers(Player.Properties[] properties, Map<Integer, Str
 		.append("\n");
       strText.append("\n");
       strText.append("##Players' configuration").append("\n");
-      for (var props : properties) {
+      for (var player : players) {
 	    strText.append("###Player\n");
-	    strText.append(props.serialize());
+	    strText.append(player.serialize());
       }
       strText.append("\n");
       return strText.toString();
 
 }
-
-private String serializeSettings(Settings.Properties props) {
-      return "#Settings\n" + props.serialize() + "\n";
+private String serializeSettings(Settings settings) {
+      return "#Settings\n" + settings.serializer().serialize() + "\n";
 }
 
 public String toText(Serializer source) {
@@ -163,4 +178,11 @@ public @Nullable Serializer fromText(String content) throws ReflectiveOperationE
       result.settings = settings.get();
       return result;
 }
+private String serializeField(GameField.Properties props){
+      return "#Field's properties\n" + props.serialize() + "\n";
+}
+private String serializeSettings(Settings.Properties settings) {
+      return "#Settings\n" + settings.serialize() + "\n";
+}
+
 }

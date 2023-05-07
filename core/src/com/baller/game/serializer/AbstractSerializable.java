@@ -52,6 +52,7 @@ public void deserialize(String serialized) {
 public boolean isEmpty(){
       return isEmpty;
 }
+
 protected void addPatterns(List<String> patterns) {
       this.patterns = patterns;
 }

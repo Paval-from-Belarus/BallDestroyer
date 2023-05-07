@@ -65,6 +65,11 @@ public static class Properties extends AbstractSerializable<Ball> {
 	    throw new UnsupportedOperationException("Use method with texture");
       }
 
+      @Override
+      public String[] getFieldNames() {
+	    return new String[]{"pos", "velocity", "radius"};
+      }
+
       private void setPos(String source) {
 	    Matcher matcher = Pattern.compile("x=(.+), *y=(.+) *").matcher(source);
 	    if (!matcher.find())

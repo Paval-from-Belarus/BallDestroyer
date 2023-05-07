@@ -6,9 +6,11 @@ import com.badlogic.gdx.math.Vector2;
 
 public class Globals {
     public enum Color {Red, Blue, Green};
+    public static String[] SCREEN_RESOLUTIONS = {"Minimal", "Broad", "Full Screen"};
+    public static int CURR_SCREEN_INDEX = 0;
     public static Vector2 DEFAULT_BALL_POS = new Vector2(150f, 130f);
-    public static Vector2 DEFAULT_BALL_VELOCITY = new Vector2(-60f, 120f);
-    public static int BALL_SIZE = 50;
+    public static Vector2 DEFAULT_BALL_VELOCITY = new Vector2(-80f, 140f);
+    public static int BALL_SIZE = 55;
     public static Vector2 DEFAULT_TRAMPOLINE_VELOCITY = new Vector2(50f, 0f);
     public static Vector2 DEFAULT_TRAMPOLINE_POS= new Vector2(100f, 40f);
     public static int TRAMPOLINE_WIDTH = 120;

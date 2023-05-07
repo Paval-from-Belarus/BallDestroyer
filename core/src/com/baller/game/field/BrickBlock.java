@@ -39,5 +39,7 @@ public void setType(Type type){
       this.type = type;
       if(type == Type.Destroyed)
             super.setState(DisplayState.Hidden);
+      else
+            super.setState(DisplayState.Visible);
 }
 }

@@ -8,8 +8,11 @@ import java.util.Map;
 public class TexturePool {
 private Texture textTrampoline;
 private Map<BrickBlock.Type, Texture> textBlocks;
+private Texture textField;
+private Texture textBorders;
 TexturePool(){
       textTrampoline = new Texture("block.png");
+      textField = new Texture("fieldBGD.png");
       initBlocks();
 }
 private void initBlocks(){
@@ -30,6 +33,12 @@ public Texture getTrampoline(){
 }
 public Texture getBlock(BrickBlock.Type type){
       return textBlocks.get(type);
+}
+public Texture getFieldBGD(){
+      return textField;
+}
+public Texture getFieldBorders(){
+      return textBorders;
 }
 public void dispose(){
 	textBlocks.forEach((key, value)->value.dispose());

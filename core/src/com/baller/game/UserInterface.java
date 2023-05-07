@@ -49,7 +49,7 @@ public void setViewport(Viewport viewport){
 	this.viewport = viewport;
 }
 public static class UserClick {
-      public enum Id {BTN_GAME_PAUSE, BTN_GAME_SAVE, BTN_GAME_RESUME, BTN_GAME_RESTORE, LBL_GAME_SCORE, BtnSettings, BtnMainMenu}
+      public enum Id {BTN_GAME_PAUSE, BTN_GAME_SAVE, BTN_GAME_RESUME, BTN_GAME_RESTORE, LBL_GAME_SCORE, UI_RESOLUTION, BtnSettings, BtnMainMenu}
 
       public Id getId() {
 	    return value;
@@ -65,7 +65,6 @@ public static class UserClick {
 	    this.task = task;
 	    return this;
       }
-
       public void bubbles(){task.accept(value);}
       public Consumer<Consumer<Object>> rocks(){
 	    return callable;
@@ -82,7 +81,7 @@ public static class UserClick {
       }
 }
 
-public static enum ScreenType {Game, Settings, MainMenu}
+public enum ScreenType {Game, Settings, MainMenu}
 
 public static class MessageInfo {
       public String title;
@@ -91,7 +90,6 @@ public static class MessageInfo {
 
 public static class Message {
       public enum Type {Defeat, Victory, NetworkLost, Process, Warning}
-
       private Texture texture;
       private Button button;
       private Dialog dialog;
