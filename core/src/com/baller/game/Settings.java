@@ -48,13 +48,13 @@ public void setSkin(String skinName) {
  * @param level relative value from 0 to 1
  * @throws IllegalArgumentException if values not in defined range
  */
-public void setSoundLevel(float level) {
+public void setLuckyLevel(float level) {
       if (level < 0f || level > 1f)
 	    throw new IllegalArgumentException("Incorrect sound level");
-      this.soundLevel = level;
+      this.luckyLevel = level;
 }
-public float getSoundLevel(){
-      return soundLevel;
+public float getLuckyLevel(){
+      return luckyLevel;
 }
 public HardnessLevel getHardness(){
       return hardness;
@@ -67,16 +67,16 @@ public Properties serializer() {
 }
 
 public static class Properties extends AbstractSerializable<Settings> {
-      private float soundLevel;
+      private float luckyLevel;
       private HardnessLevel hardness;
       private ResolutionMode resolution;
       private String skinName;
 
       public Properties() {
 	    var patterns = List.of(
-		"Resolution=(.+)", "Hardness=(.+)", "SoundLevel=(.+)", "SkinName=(.+)");
+		"Resolution=(.+)", "Hardness=(.+)", "LuckyLevel=(.+)", "SkinName=(.+)");
 	    List<Consumer<String>> handlers = List.of(this::setResolution, this::setHardness,
-		this::setSound, this::setSkin);
+		this::setLuckyLevel, this::setSkin);
 	    addPatterns(patterns);
 	    addHandlers(handlers);
 	    setEmptyState(true);
@@ -84,7 +84,7 @@ public static class Properties extends AbstractSerializable<Settings> {
       private Properties(Settings owner){
 	    this();
 	    this.hardness = owner.hardness;
-	    this.soundLevel = owner.soundLevel;
+	    this.luckyLevel = owner.luckyLevel;
 	    this.resolution = owner.resolution;
 	    this.skinName = owner.skinName;
 	    setEmptyState(false);
@@ -94,7 +94,7 @@ public static class Properties extends AbstractSerializable<Settings> {
       public String toString() {
 	    return "Resolution=" + resolution.toString() + "\n" +
 		       "Hardness=" + hardness + "\n" +
-		       "SoundLevel=" + soundLevel + "\n" +
+		       "LuckyLevel=" + luckyLevel + "\n" +
 		       "SkinName=" + skinName + "\n";
       }
 
@@ -109,7 +109,7 @@ public static class Properties extends AbstractSerializable<Settings> {
 //		  return null;
 	    Settings parent = new Settings();
 	    parent.setSkin(this.skinName);
-	    parent.setSoundLevel(this.soundLevel);
+	    parent.setLuckyLevel(this.luckyLevel);
 	    parent.setResolution(this.resolution);
 	    parent.setHardness(this.hardness);
 	    return parent;
@@ -117,7 +117,7 @@ public static class Properties extends AbstractSerializable<Settings> {
 
       @Override
       public String[] getFieldNames() {
-	    return new String[]{"soundLevel", "hardness", "resolution", "skinName"};
+	    return new String[]{"luckyLevel", "hardness", "resolution", "skinName"};
       }
 
       private void setResolution(String source) throws NumberFormatException {
@@ -128,8 +128,8 @@ public static class Properties extends AbstractSerializable<Settings> {
 	    this.hardness = HardnessLevel.valueOf(source);
       }
 
-      private void setSound(String source) {
-	    this.soundLevel = Float.parseFloat(source);
+      private void setLuckyLevel(String source) {
+	    this.luckyLevel = Float.parseFloat(source);
       }
 
       private void setSkin(String source) {
@@ -137,7 +137,7 @@ public static class Properties extends AbstractSerializable<Settings> {
       }
 }
 
-private float soundLevel;
+private float luckyLevel;
 private HardnessLevel hardness;
 private ResolutionMode resolution;
 private String skinName;

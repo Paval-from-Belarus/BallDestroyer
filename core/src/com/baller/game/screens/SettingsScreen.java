@@ -71,13 +71,14 @@ private boolean onScreenReturn(Event event) {
 }
 
 private boolean onChangeProps(Event event) {
+
       var props = List.of(INITIAL_RESOLUTION_INDEX, modeIndex, luckyRatio, fieldRatio);
       var realProps = List.of(Globals.CURR_SCREEN_INDEX, Globals.CURR_MODE_INDEX,
           Globals.CURR_LUCKY_LEVEL, Globals.FIELD_RATIO);
       boolean hasChanged = false;
       int index = 0;
-      for (Number value : props) {
-            hasChanged = (value.equals(realProps.get(index)));
+      for (var value : props) {
+            hasChanged = !(value.equals(realProps.get(index)));
             index += 1;
             if (hasChanged) {
                   break;

@@ -36,11 +36,11 @@ public GameField.Properties field;
 public Player.Properties[] players;
 public Map<Integer, String> nameMapper;
 public Settings.Properties settings;
-public String configPath;
+public transient String configPath;
 
-private GameField gameField;
-private Players rawPlayers;
-private Settings rawSettings;
+private transient GameField gameField;
+private transient Players rawPlayers;
+private transient Settings rawSettings;
 
 private void setPlayersProps(Players players) throws NoSuchFieldException, IllegalAccessException {
       Player.Properties[] properties = players.getAll();

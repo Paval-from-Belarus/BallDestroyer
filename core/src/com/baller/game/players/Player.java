@@ -3,6 +3,7 @@ package com.baller.game.players;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.baller.game.Game;
+import com.baller.game.Globals;
 import com.baller.game.field.BlockCollision;
 import com.baller.game.field.BrickBlock;
 import com.baller.game.field.GameField;
@@ -151,6 +152,7 @@ private Player.State state;
 Player(Player.Id id) {
       this.id = id;
       balls.add(new Ball(textBall));
+      boost(Game.HardnessLevel.values()[Globals.CURR_MODE_INDEX]);
 //      balls.add(new Ball(textBall));
 //      balls.get(1).reflect(AnimatedObject.Axis.Vertical);
 }
@@ -254,7 +256,7 @@ public Player.State getState(){
 }
 
 public boolean isActive() {
-      return this.state == State.Alive;
+      return this.state == State.Alive || this.state == State.Victory;
 }
 
 public Properties getProperties() {

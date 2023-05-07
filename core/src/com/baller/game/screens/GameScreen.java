@@ -30,7 +30,7 @@ private SpriteBatch batch;
 private MessageBox messageBox;
 private float lastEventTime = 0;
 @Override
-public void showMessage(Message.Type type, MessageInfo info) {
+public void showMessage(MessageInfo info) {
       messageBox.rebuild(info);
       messageBox.show(stage);
 }
@@ -67,8 +67,8 @@ public GameScreen(Skin skin, Viewport port) {
       messageBox.hide();
 }
 private boolean onRestartClicked(Event event) {
-      if (menu.isVisible()){
-	    menu.hide();
+      if (messageBox.isVisible()){
+	    messageBox.hide();
 	    bubblesClick(Id.MSG_GAME_PROCESS);
       }
       return true;

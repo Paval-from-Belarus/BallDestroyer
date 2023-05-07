@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Null;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.*;
 import com.baller.game.GameController.Event;
@@ -12,7 +13,6 @@ import com.baller.game.field.GameField;
 import java.awt.*;
 import java.io.File;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -37,7 +37,8 @@ public enum Stage {
 	    GameProcess.last = GameProcess;
 	    MainMenu.last = GameProcess;
       }
-      public Stage getLast(){
+
+      public Stage getLast() {
 	    return last;
       }
 }
@@ -77,7 +78,6 @@ public enum ResolutionMode {
       }
 }
 
-public static final float DEFAULT_FIELD_RATIO = 0.5f;
 public static SpriteBatch batch;
 private Players players;
 private GameField field;
@@ -105,7 +105,7 @@ public void create() {
 private void initSettings() {
       settings = new Settings(ResolutionMode.Tiny);
       settings.setHardness(HardnessLevel.Easy);
-      settings.setSoundLevel(DEFAULT_FIELD_RATIO);
+      settings.setLuckyLevel(Globals.CURR_LUCKY_LEVEL);
 }
 
 private void initField(float dt) {
@@ -123,7 +123,7 @@ private void initField(float dt) {
       if (field.verify(id)) {
 	    players.release(id);
       }
-      field.setRatio(DEFAULT_FIELD_RATIO);
+      field.setRatio(Globals.FIELD_RATIO);
       field.rebuild();
       settings.setSkin("White");
       isFieldCreated.set(true);
@@ -176,9 +176,11 @@ private void load(@Nullable Object rawMode) {
 	    this.field.rebuild();
 	    this.settings = s.settings.construct();
 	    if (this.settings != null) {
+		  changeLuckyLevel(settings.getLuckyLevel());
 		  changeResolution(settings.getResolution());
 		  changeGameMode(settings.getHardness());
 	    }
+	    controller.hideMessage();
 	    isFieldCreated.set(true);
 	    controller.removeCallback(Event.OnProgressSave, this::load);
       }, () -> System.out.println("NO CONFIG FILE"));
@@ -209,12 +211,6 @@ private void save(Object rawMode) {
 	    return;
       }
       executor.start();
-      controller
-	  .sendMessage(
-	      Message.Type.Process,
-	       null,
-	      guardRuler(executor::isAlive)
-	  );
 }
 
 private void defaultRenderHandler(float dt) {
@@ -225,14 +221,6 @@ private void freezeField(float dt) {
       controller.addCallback(Event.onStageChange, this::pauseHandler);
       controller.addCallback(Event.OnProgressSave, this::save);
       controller.addCallback(Event.OnProgressRestore, this::load);
-}
-
-public Supplier<Boolean> guardRuler(Supplier<Boolean> handle) {
-      return () -> {
-	    if (!this.isActive.get())
-		  return false;
-	    return handle.get();
-      };
 }
 
 private void pauseHandler(Object rawScreen) {
@@ -261,6 +249,9 @@ private void rebuildGame(@Nullable Object handle) {
       changeGameMode(handle);
       changeFieldRatio(handle);
       changeResolution(handle);
+      changeLuckyLevel(handle);
+      isFieldCreated.set(false);
+      renderHandler = this::initField;
 }
 
 private void onChangeStage(Object rawScreen) {
@@ -283,8 +274,9 @@ private void changeGameMode(@Nullable Object rawMode) {
 	    Globals.CURR_MODE_INDEX = mode.ordinal();
       } else {
 	    mode = HardnessLevel.values()[Globals.CURR_MODE_INDEX];
+	    players.forEach(Player.State.Alive, pl -> pl.boost(mode));
       }
-      players.forEach(Player.State.Alive, pl -> pl.boost(mode));
+      settings.setHardness(mode);
 }
 
 private void changeFieldRatio(@Nullable Object value) {
@@ -313,7 +305,12 @@ private void changeResolution(@Nullable Object rawMode) {
       }
       settings.setResolution(mode);
 }
-
+private void changeLuckyLevel(@Nullable Object value) {
+      if (value != null) {
+	    Globals.CURR_LUCKY_LEVEL = (Float) value;
+      }
+      settings.setLuckyLevel(Globals.CURR_LUCKY_LEVEL);
+}
 private void dispatchPlayer(Player player) {
       Ball[] balls = player.getBalls();
       field.mark(player.getId());
@@ -332,14 +329,26 @@ private void renderField(float dt) {
       players.draw(batch);
       batch.end();
 }
-private void finishHandler(Players.GameResult result) {
-      MessageInfo msgInfo;
-//      if (result == Players.GameResult.Victory) {
-//	    controller.sendMessage(Message.Type.Victory, "Victory", "Play again!");
-//      } else {
-//	    controller.sendMessage(Message.Type.Defeat, "Defeat", "Try again...");
-//      }
+
+private void restartHandler(@Nullable Object handle) {
+      if (isFieldCreated.get()) {
+	    isFieldCreated.set(false);
+	    renderHandler = this::initField;
+	    controller.hideMessage();
+	    controller.removeCallback(Event.OnGameRestart, this::restartHandler);
+      }
 }
+
+private void finishHandler(Players.GameResult result) {
+      renderHandler = this::renderField;
+      controller.addCallback(Event.OnGameRestart, this::restartHandler);
+      if (result == Players.GameResult.Victory) {
+	    controller.sendMessage(Message.Type.Victory, "Victory", "Play again!");
+      } else {
+	    controller.sendMessage(Message.Type.Defeat, "Defeat", "Try again...");
+      }
+}
+
 private void dispatchField(float dt) {
       final float MAX_DELTA = 0.15f;
       dt = Math.min(MAX_DELTA, dt);

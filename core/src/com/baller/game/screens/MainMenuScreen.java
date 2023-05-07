@@ -43,7 +43,7 @@ public class MainMenuScreen implements ClickScreen {
     }
 
 @Override
-public void showMessage(UserInterface.Message.Type type, UserInterface.MessageInfo info) {
+public void showMessage(UserInterface.MessageInfo info) {
 
 }
 

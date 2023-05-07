@@ -123,10 +123,10 @@ private void setBtnAccept(){
       addActor(btnAccept);
 }
 private void setRatioSlider(){
-      fieldRatioSlider.setValue(Globals.CURR_LUCKY_LEVEL);
+      fieldRatioSlider.setValue(Globals.FIELD_RATIO);
 }
 private void setFortuneSlider(){
-      fortuneSlider.setValue(Globals.FIELD_RATIO);
+      fortuneSlider.setValue(Globals.CURR_LUCKY_LEVEL);
 }
 
 /**

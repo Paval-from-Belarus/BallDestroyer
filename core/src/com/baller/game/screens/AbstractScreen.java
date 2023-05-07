@@ -21,7 +21,7 @@ public AbstractScreen(Skin skin, Viewport viewport){
 }
 
 @Override
-public void showMessage(Message.Type type, MessageInfo info) {
+public void showMessage(MessageInfo info) {
 }
 
 @Override

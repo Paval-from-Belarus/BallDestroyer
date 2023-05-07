@@ -82,7 +82,7 @@ public void remove(Player.Id id) {
 
 private @NotNull Player[] getVerifiedPlayers() {
       return players.stream()
-		 .filter(player -> player.getState() == State.Alive)
+		 .filter(Player::isActive)
 		 .toArray(Player[]::new);
 }
 

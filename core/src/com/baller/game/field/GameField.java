@@ -144,9 +144,9 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 public static BrickBlock.Type[] getRandomBricks(int brickCnt) {
       BrickBlock.Type[] brickTypes = new BrickBlock.Type[brickCnt];
       Random random = new Random();
-      float luckyLevel = CURR_LUCKY_LEVEL;
+      final int RANDOM_BOUND = Math.max(1, (int) (CURR_LUCKY_LEVEL * BrickBlock.Type.values().length));
       for (int i = 0; i < brickTypes.length; i++) {
-	    int typeIndex = random.nextInt((int) (BrickBlock.Type.values().length * luckyLevel));
+	    int typeIndex = random.nextInt(RANDOM_BOUND);
 	    if (typeIndex == BrickBlock.Type.Destroyed.ordinal())
 		  typeIndex = BrickBlock.Type.Plain.ordinal();
 	    brickTypes[i] = BrickBlock.Type.values()[typeIndex];

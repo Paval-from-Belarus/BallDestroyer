@@ -19,7 +19,7 @@ public class GameController {
  * is <code>UserInterface.ScreenType</code>
  */
 public enum Event {OnResolutionChange, onStageChange, OnProgressSave, OnProgressRestore, OnSkinChange, OnProgramExit,
-onGameRebuild}
+onGameRebuild, OnGameRestart}
 
 private Game.Stage stage;
 private UserInterface ui;
@@ -62,16 +62,19 @@ private Optional<Event> convertClick(UserClick.Id id) {
 		  setStage(stage.getLast());
 		  event = Event.onGameRebuild;
 	    }
+	    case MSG_GAME_PROCESS -> event = Event.OnGameRestart;
       }
       return Optional.ofNullable(event);
 }
 
-public void sendMessage(Message.Type type, MessageInfo info, Supplier<Boolean> ruleHandler) {
-      ui.showMessage(type, info);
-      Thread executor = new Thread(() -> loopHandler(ruleHandler, ui::hideMessage));
-      executor.start();
+public void sendMessage(Message.Type type, @NotNull String title, @NotNull String text) {
+      MessageInfo info = new MessageInfo(type, title, text);
+      ui.showMessage(info);
 }
 
+public void hideMessage(){
+      ui.hideMessage();
+}
 private void loopHandler(Supplier<Boolean> ruler, Runnable lastTask) {
       while (ruler.get() && Gdx.app.getApplicationListener() != null) {
 	    Thread.yield();//do nothing besides waiting
