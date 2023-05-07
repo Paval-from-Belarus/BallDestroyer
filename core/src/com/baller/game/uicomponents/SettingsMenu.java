@@ -180,4 +180,7 @@ public void addBtnAcceptListener(EventListener listener) {
 	    }
       });
 }
+public void dispose(){
+	background.dispose();
+}
 }

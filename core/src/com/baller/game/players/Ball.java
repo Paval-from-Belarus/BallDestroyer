@@ -94,6 +94,7 @@ public static class Properties extends AbstractSerializable<Ball> {
 }
 
 private Consumer<Sprite> animation;
+private boolean isFrozen = false;
 
 Ball(Texture texture) {
       super(texture);
@@ -107,6 +108,10 @@ Ball(Texture texture) {
 
 public void freeze() {
       this.velocity = new Vector2(0f, 0f);
+      isFrozen = true;
+}
+public boolean isFrozen(){
+      return isFrozen;
 }
 public void boost(float ratio) {
       this.velocity = this.velocity.scl(ratio);

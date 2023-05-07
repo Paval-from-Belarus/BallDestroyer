@@ -43,6 +43,16 @@ public class MainMenuScreen implements ClickScreen {
     }
 
 @Override
+public void showMessage(UserInterface.Message.Type type, UserInterface.MessageInfo info) {
+
+}
+
+@Override
+public void hideMessage() {
+
+}
+
+@Override
 public List<UserInterface.UserClick> getAll() {
     return null;
 }

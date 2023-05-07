@@ -23,6 +23,7 @@ private Viewport viewport;
 private final Map<UserClick.Id, UserClick> clicksMapper;
 private final Map<UserClick.Id, Consumer<Object>> rocksMapper;
 private final HashSet<UserClick.Id> messages;
+
 UserInterface() {
       this.skin = new Skin(Gdx.files.internal("buttonsPack/buttons_pack.json"));
       this.clicksMapper = new HashMap<>();
@@ -30,54 +31,77 @@ UserInterface() {
       this.rocksMapper = new HashMap<>();
       initClicks();
 }
-private void initClicks(){
-	for(var id : UserClick.Id.values()){
-	      var click = new UserClick(id);
-	      click.setBubbles(this::appendMessage);
-	      click.setRocks((handler)->appendRocksHandler(click.getId(), handler));
-	      clicksMapper.put(id, click);
-	}
+
+private void initClicks() {
+      for (var id : UserClick.Id.values()) {
+	    var click = new UserClick(id);
+	    click.setBubbles(this::appendMessage);
+	    click.setRocks((handler) -> appendRocksHandler(click.getId(), handler));
+	    clicksMapper.put(id, click);
+      }
 }
-private void appendRocksHandler(UserClick.Id id, Consumer<Object> rocksHandler){
+
+private void appendRocksHandler(UserClick.Id id, Consumer<Object> rocksHandler) {
       rocksMapper.put(id, rocksHandler);
 }
-private void appendMessage(UserClick.Id id){
+
+private void appendMessage(UserClick.Id id) {
       messages.add(id);
 }
-public void setViewport(Viewport viewport){
-	this.viewport = viewport;
+
+public void setViewport(Viewport viewport) {
+      this.viewport = viewport;
 }
+
+@FunctionalInterface
+public interface RocksHandler {
+      void accept(Consumer<Object> rocks);
+}
+
 public static class UserClick {
-      public enum Id {BTN_GAME_PAUSE, BTN_GAME_SAVE, BTN_GAME_RESUME, BTN_GAME_RESTORE, LBL_GAME_SCORE, UI_RESOLUTION,
+      public enum Id {
+	    BTN_GAME_PAUSE, BTN_GAME_SAVE, BTN_GAME_RESUME, BTN_GAME_RESTORE, LBL_GAME_SCORE, UI_RESOLUTION,
 	    BTN_SETTINGS_SCREEN, BTN_HARDNESS_LEVEL, BTN_FORTUNE_LEVEL, BTN_DISCARD_SETTINGS, BTN_FIELD_RATIO, BTN_LUCKY,
-	    BTN_ACCEPT_SETTINGS,
-	    BtnSettings, BtnMainMenu}
+	    BTN_ACCEPT_SETTINGS, MSG_GAME_PROCESS,
+	    BtnSettings, BtnMainMenu
+      }
 
       public Id getId() {
 	    return value;
       }
+
       public UserClick(Id id) {
 	    this.value = id;
       }
-      public UserClick setRocks(Consumer<Consumer<Object>> callback){
+
+      public UserClick setRocks(RocksHandler callback) {
 	    this.callable = callback;
 	    return this;
       }
-      public UserClick setBubbles(Consumer<Id> task){
+
+      public UserClick setBubbles(Consumer<Id> task) {
 	    this.task = task;
 	    return this;
       }
-      public void bubbles(){task.accept(value);}
-      public Consumer<Consumer<Object>> rocks(){
+
+      public void bubbles() {
+	    task.accept(value);
+      }
+
+      public RocksHandler rocks() {
 	    return callable;
       }
+
       private final Id value;
-      private Consumer<Consumer<Object>> callable = o->{};
-      private Consumer<Id> task = (id)->{};
+      private RocksHandler callable = o -> {
+      };
+      private Consumer<Id> task = (id) -> {
+      };
+
       @Override
-      public boolean equals(Object other){
+      public boolean equals(Object other) {
 	    boolean result = false;
-	    if(other instanceof UserClick)
+	    if (other instanceof UserClick)
 		  result = ((UserClick) other).value.equals(this.value);
 	    return result;
       }
@@ -86,12 +110,14 @@ public static class UserClick {
 public enum ScreenType {Game, Settings, MainMenu}
 
 public static class MessageInfo {
+      public Message.Type type;
       public String title;
-      public Object info; //for different Messages ― different
+      public String text; //for different Messages ― different
 }
 
 public static class Message {
       public enum Type {Defeat, Victory, NetworkLost, Process, Warning}
+
       private Texture texture;
       private Button button;
       private Dialog dialog;
@@ -100,7 +126,6 @@ public static class Message {
 
       }
 }
-
 public void showMessage(Message.Type type, MessageInfo info) {
 
 }
@@ -124,20 +149,23 @@ public void setScreen(ScreenType type) {
  */
 public void setComponent(UserClick.Id id, Object value) {
       var handler = rocksMapper.get(id);
-      if(handler != null){
+      if (handler != null) {
 	    handler.accept(value);
       } else {
 	    System.out.println("Handler on " + id.toString() + " is not set");
       }
 }
+
 public @NotNull List<UserClick.Id> getUserClick() {
       List<UserClick.Id> list = new ArrayList<>(messages);
       messages.clear();
       return list;
 }
-public ScreenType getScreenType(){
+
+public ScreenType getScreenType() {
       return screenType;
 }
+
 public Screen getScreen() {
       return mainScreen;
 }

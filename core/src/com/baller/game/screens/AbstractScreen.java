@@ -19,6 +19,16 @@ public AbstractScreen(Skin skin, Viewport viewport){
       this.skin = skin;
       this.viewport = viewport;
 }
+
+@Override
+public void showMessage(Message.Type type, MessageInfo info) {
+}
+
+@Override
+public void hideMessage() {
+
+}
+
 @Override
 public List<UserClick> getAll() {
       return null;

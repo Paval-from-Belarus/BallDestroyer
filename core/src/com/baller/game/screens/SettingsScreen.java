@@ -125,6 +125,8 @@ public void render(float delta) {
 
 @Override
 public void dispose() {
-
+      menu.dispose();
+      batch.dispose();
+      stage.dispose();
 }
 }

@@ -20,6 +20,8 @@ import com.baller.game.UserInterface;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static com.baller.game.UserInterface.*;
+
 public class ScoreBar extends UIComponent {
 private static final String TITLE_TEXT = "Score";
 private static final String BUTTON_STYLE = "PAUSE_BUTTON";
@@ -90,7 +92,7 @@ public void addPauseListener(EventListener listener) {
 /**
  * rocks accept any value that will used to show current score. Current score will in form of Integer
  */
-public void onScoreChanged(Consumer<Consumer<Object>> rocks) {
+public void onScoreChanged(RocksHandler rocks) {
       rocks.accept(score -> title.setText((Integer) score));
 }
 

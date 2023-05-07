@@ -24,6 +24,8 @@ import com.baller.game.serializer.Serializer;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.Nullable;
 
+import static com.baller.game.UserInterface.*;
+
 public class Game extends com.badlogic.gdx.Game {
 public enum Stage {
       GameProcess, Settings, MainMenu, GamePause;
@@ -209,8 +211,8 @@ private void save(Object rawMode) {
       executor.start();
       controller
 	  .sendMessage(
-	      UserInterface.Message.Type.Process,
-	      null,
+	      Message.Type.Process,
+	       null,
 	      guardRuler(executor::isAlive)
 	  );
 }
@@ -319,6 +321,7 @@ private void dispatchPlayer(Player player) {
 	    GameField.Message msg = field.getMessage(ball);
 	    player.dispatch(msg, ball);
       }
+      player.commit();
       controller.setScore(player.getScore());
       field.release();
 }
@@ -329,7 +332,14 @@ private void renderField(float dt) {
       players.draw(batch);
       batch.end();
 }
-
+private void finishHandler(Players.GameResult result) {
+      MessageInfo msgInfo;
+//      if (result == Players.GameResult.Victory) {
+//	    controller.sendMessage(Message.Type.Victory, "Victory", "Play again!");
+//      } else {
+//	    controller.sendMessage(Message.Type.Defeat, "Defeat", "Try again...");
+//      }
+}
 private void dispatchField(float dt) {
       final float MAX_DELTA = 0.15f;
       dt = Math.min(MAX_DELTA, dt);
@@ -337,6 +347,9 @@ private void dispatchField(float dt) {
 	    Optional<Player> player = players.get(properties.getId());
 	    player.ifPresent(this::dispatchPlayer);
       }
+      var result = players.getGameResult();
+      if (result != Players.GameResult.InProgress)
+	    finishHandler(result);
       players.update(dt);
       field.update(dt);
       renderField(dt);

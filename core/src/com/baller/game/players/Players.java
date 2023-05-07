@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public class Players {
+public enum GameResult {Victory, Defeat, InProgress}
 public static final int DEFAULT_PLAYER_CNT = 1;
 private final List<Player> players;
 private final Map<Player.Id, String> playersMap;
@@ -120,5 +121,20 @@ public void draw(SpriteBatch batch) {
 public void update(float dt) {
       Arrays.stream(getVerifiedPlayers())
 	  .forEach(player -> player.update(dt));
+}
+//the great assumption... Only single player)
+public GameResult getGameResult(){
+      GameResult result = GameResult.Defeat;
+      for (Player player : getVerifiedPlayers()) {
+	    if (player.getState() == State.Victory) {
+		result = GameResult.Victory;
+		break;
+	    }
+	    //the player in game
+	    if (player.isActive()) {
+		  result = GameResult.InProgress;
+	    }
+      }
+      return result;
 }
 }

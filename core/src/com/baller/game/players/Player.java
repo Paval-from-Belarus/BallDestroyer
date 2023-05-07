@@ -111,7 +111,7 @@ public static final int DEFAULT_TRAMPOLINE_CNT = 1;
 public static final int DEFAULT_BALL_CNT = 1;
 public static final int DEFAULT_SCORE = 0;
 
-public enum State {Blocked, Alive, Defeated}
+public enum State {Blocked, Alive, Defeated, Victory}
 
 public static class Id {
       int value;
@@ -126,8 +126,9 @@ public static class Id {
 		  return ((Player.Id) other).value == this.value;
 	    return false;
       }
+
       @Override
-      public String toString(){
+      public String toString() {
 	    return String.valueOf(value);
       }
 }
@@ -166,9 +167,6 @@ public void setState(Player.State state) {
 	    ball.setState(DisplayState.Hidden);
 }
 
-public State getState() {
-      return this.state;
-}
 
 public void draw(SpriteBatch batch) {
       if (state == State.Blocked)
@@ -179,6 +177,7 @@ public void draw(SpriteBatch batch) {
 	    ball.draw(batch);
       }
 }
+
 public void boost(Game.HardnessLevel level) {
       balls.forEach(ball -> ball.boost(level.ratio()));
 }
@@ -241,6 +240,18 @@ public void dispatch(GameField.Message msg, Ball ball) {
       }
       GameField.DefaultDispatcher(msg, ball);
 }
+public void commit() {
+      if (isActive()) {
+	    boolean isFrozen = balls.stream()
+		.allMatch(Ball::isFrozen);
+	    if (isFrozen) {
+		  this.state = State.Victory;
+	    }
+      }
+}
+public Player.State getState(){
+      return state;
+}
 
 public boolean isActive() {
       return this.state == State.Alive;
@@ -257,7 +268,8 @@ public Ball[] getBalls() {
 public void setTrampolineCnt(int trampolineCnt) {
       this.trampolineCnt = trampolineCnt;
 }
-public int getScore(){
+
+public int getScore() {
       return score;
 }
 

@@ -63,8 +63,8 @@ private void setTitle(){
 }
 private void setButtons(){
       final int xOffset = (getPos().x >> 1) - 10;
-      int yOffset = getPos().y + (getHeight() >> 1) - (getHeight() >> 2) - 40;
-      List<Button> buttons = List.of(btnSave, btnResume, btnSettings, btnRestore);
+      int yOffset = getPos().y + (getHeight() >> 1) - (getHeight() >> 2) + 40;
+      List<Button> buttons = List.of(btnResume, btnSettings, btnSave, btnRestore);
       for(Button button : buttons){
             button.setSize(
                 Globals.convertWidth(BUTTON_WIDTH),
