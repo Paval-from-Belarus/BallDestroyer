@@ -13,11 +13,19 @@ import static com.baller.game.Game.*;
 public class Settings {
 private static final String JSON_BACK_FILE = "game.back.json";
 private static final String TEXT_BACK_FILE = "game.back.txt";
+private static final String TEXT_INTERNAL_BACK_FILE = "auto.back.txt";
+private static final String JSON_INTERNAL_BACK_FILE = "auto.back.json";
 public static Path getJsonBackPath(){
       return Path.of(JSON_BACK_FILE);
 }
 public static Path getTxtBackPath(){
       return Path.of(TEXT_BACK_FILE);
+}
+public static Path getTxtAutoBackPath(){
+      return Path.of(TEXT_INTERNAL_BACK_FILE);
+}
+public static Path getJsonAutoBackPath(){
+      return Path.of(JSON_INTERNAL_BACK_FILE);
 }
 private Settings() {
 }

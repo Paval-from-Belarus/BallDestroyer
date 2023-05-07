@@ -25,7 +25,7 @@ protected DisplayObject(Texture texture) {
 }
 
 public void draw(SpriteBatch batch) {
-      if (isVisible())
+      if (isVisible() && spriteBack != null)
 	    spriteBack.draw(batch);
 }
 

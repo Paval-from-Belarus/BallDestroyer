@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.baller.game.Globals;
 import com.baller.game.common.AnimatedObject;
 import com.baller.game.common.Collider;
 import com.baller.game.common.DisplayObject;
@@ -143,8 +144,9 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 public static BrickBlock.Type[] getRandomBricks(int brickCnt) {
       BrickBlock.Type[] brickTypes = new BrickBlock.Type[brickCnt];
       Random random = new Random();
+      float luckyLevel = CURR_LUCKY_LEVEL;
       for (int i = 0; i < brickTypes.length; i++) {
-	    int typeIndex = random.nextInt(BrickBlock.Type.values().length);
+	    int typeIndex = random.nextInt((int) (BrickBlock.Type.values().length * luckyLevel));
 	    if (typeIndex == BrickBlock.Type.Destroyed.ordinal())
 		  typeIndex = BrickBlock.Type.Plain.ordinal();
 	    brickTypes[i] = BrickBlock.Type.values()[typeIndex];

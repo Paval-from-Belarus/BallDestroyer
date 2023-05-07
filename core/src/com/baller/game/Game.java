@@ -12,6 +12,7 @@ import com.baller.game.field.GameField;
 import java.awt.*;
 import java.io.File;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -20,17 +21,47 @@ import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import com.baller.game.players.Players;
 import com.baller.game.serializer.Serializer;
+import org.javatuples.Pair;
 import org.jetbrains.annotations.Nullable;
 
 public class Game extends com.badlogic.gdx.Game {
-public enum Stage {GameProcess, Settings, MainMenu, GamePause}
-public enum HardnessLevel {Easy, Hard, Mad}
+public enum Stage {
+      GameProcess, Settings, MainMenu, GamePause;
+      private Stage last;
+
+      static {
+	    GamePause.last = GameProcess;
+	    Settings.last = GameProcess;
+	    GameProcess.last = GameProcess;
+	    MainMenu.last = GameProcess;
+      }
+      public Stage getLast(){
+	    return last;
+      }
+}
+
+public enum SavedMode {User, Internal}
+
+public enum HardnessLevel {
+      Easy, Hard, Mad;
+      private float ratio = 1.0f;
+
+      static {
+	    Hard.ratio = 2.0f;
+	    Mad.ratio = 3.0f;
+      }
+
+      public float ratio() {
+	    return ratio;
+      }
+}
+
 public enum ResolutionMode {
-      Small, Broad, Full;
+      Tiny, Broad, Full;
       private Point mode;
 
       static {
-	    Small.mode = new Point(640, 480);
+	    Tiny.mode = new Point(640, 480);
 	    Broad.mode = new Point(1024, 768);
 	    Full.mode = Broad.mode;
       }
@@ -43,6 +74,7 @@ public enum ResolutionMode {
 	    return mode.y;
       }
 }
+
 public static final float DEFAULT_FIELD_RATIO = 0.5f;
 public static SpriteBatch batch;
 private Players players;
@@ -69,7 +101,7 @@ public void create() {
 }
 
 private void initSettings() {
-      settings = new Settings(ResolutionMode.Small);
+      settings = new Settings(ResolutionMode.Tiny);
       settings.setHardness(HardnessLevel.Easy);
       settings.setSoundLevel(DEFAULT_FIELD_RATIO);
 }
@@ -96,14 +128,27 @@ private void initField(float dt) {
       renderHandler = this::dispatchField;
 }
 
+Pair<File, File> getBackFiles(SavedMode mode) {
+      Pair<File, File> pair;
+      if (mode == SavedMode.User) {
+	    pair = new Pair<>(Settings.getJsonBackPath().toFile(), Settings.getTxtBackPath().toFile());
+      } else {
+	    pair = new Pair<>(Settings.getJsonAutoBackPath().toFile(), Settings.getTxtAutoBackPath().toFile());
+      }
+      return pair;
+}
+
 /**
- * @return not empty Serializer if it exist
+ * @return not empty Serializer if it exists
  * At another way, return empty
  * This convention is applicable for save method
  */
-private Optional<Serializer> findSavedGame() {
-      File jsonBack = Settings.getJsonBackPath().toFile();
-      File txtBack = Settings.getTxtBackPath().toFile();
+private Optional<Serializer> findSavedGame(SavedMode mode) {
+      File jsonBack;
+      File txtBack;
+      Pair<File, File> filePair = getBackFiles(mode);
+      jsonBack = filePair.getValue0();
+      txtBack = filePair.getValue1();
       Serializer serializer = new Serializer();
       if (txtBack.exists() && serializer.fromFile(txtBack.getAbsolutePath(), Serializer.SerializationMode.Text)) {
 	    return Optional.of(serializer);
@@ -114,8 +159,11 @@ private Optional<Serializer> findSavedGame() {
       return Optional.empty();
 }
 
-private void load(Object handle) {
-      var serializer = findSavedGame();
+private void load(@Nullable Object rawMode) {
+      SavedMode mode = SavedMode.User;
+      if (rawMode != null)
+	    mode = (SavedMode) rawMode;
+      var serializer = findSavedGame(mode);
       serializer.ifPresentOrElse(s -> {
 	    this.field = s.field.construct();
 	    this.field.addPlayers(s.players);
@@ -135,9 +183,13 @@ private void load(Object handle) {
 }
 
 /**
- * @param handle is any handle that will be skipped
+ * @param rawMode is any handle that will be skipped
  */
-private void save(Object handle) {
+private void save(Object rawMode) {
+      SavedMode mode = SavedMode.User;
+      if (rawMode != null)
+	    mode = (SavedMode) rawMode;
+      Pair<File, File> filePair = getBackFiles(mode);
       Serializer serializer = new Serializer();
       Thread executor;
       try {
@@ -146,8 +198,8 @@ private void save(Object handle) {
 		.setGameField(field)
 		.setSettings(settings);
 	    Runnable task = () -> {
-		  serializer.toFile(Settings.getJsonBackPath().toString(), Serializer.SerializationMode.Json);
-		  serializer.toFile(Settings.getTxtBackPath().toString(), Serializer.SerializationMode.Text);
+		  serializer.toFile(filePair.getValue0().toString(), Serializer.SerializationMode.Json);
+		  serializer.toFile(filePair.getValue1().toString(), Serializer.SerializationMode.Text);
 	    };
 	    executor = new Thread(task);
       } catch (Exception e) {
@@ -190,16 +242,23 @@ private void pauseHandler(Object rawScreen) {
 }
 
 private void initController() {
-      controller = new GameController();
+      controller = new GameController(Stage.GameProcess);
       controller.setViewport(viewport);
       controller.addCallback(Event.OnResolutionChange, this::changeResolution);
       controller.addCallback(Event.onStageChange, this::onChangeStage);
       controller.addCallback(Event.OnProgramExit, this::onApplicationExit);
+      controller.addCallback(Event.onGameRebuild, this::rebuildGame);
       controller.init();
 }
 
 private void onApplicationExit(Object handle) {
       Gdx.app.exit();
+}
+
+private void rebuildGame(@Nullable Object handle) {
+      changeGameMode(handle);
+      changeFieldRatio(handle);
+      changeResolution(handle);
 }
 
 private void onChangeStage(Object rawScreen) {
@@ -208,25 +267,41 @@ private void onChangeStage(Object rawScreen) {
       switch (controller.getStage()) {
 	    case GameProcess -> renderHandler = this::initField;
 	    case GamePause -> renderHandler = this::freezeField;
-	    case Settings -> {
-	    }
+	    case Settings -> renderHandler = this::freezeField;
 	    case MainMenu -> {
 	    }
       }
 }
-private void changeGameMode(@Nullable Object rawMode){
 
+
+private void changeGameMode(@Nullable Object rawMode) {
+      HardnessLevel mode;
+      if (rawMode != null) {
+	    mode = (HardnessLevel) rawMode;
+	    Globals.CURR_MODE_INDEX = mode.ordinal();
+      } else {
+	    mode = HardnessLevel.values()[Globals.CURR_MODE_INDEX];
+      }
+      players.forEach(Player.State.Alive, pl -> pl.boost(mode));
 }
+
 private void changeFieldRatio(@Nullable Object value) {
-
+      if (value != null) {
+	    Float ratio = (Float) value;
+	    field.setRatio(ratio);
+	    Globals.FIELD_RATIO = ratio;
+      } else {
+	    field.setRatio(Globals.FIELD_RATIO);
+      }
+      field.rebuild();
 }
+
 private void changeResolution(@Nullable Object rawMode) {
       ResolutionMode mode;
       if (rawMode != null) {
 	    mode = (ResolutionMode) rawMode;
 	    Globals.CURR_SCREEN_INDEX = mode.ordinal();
-      }
-      else {
+      } else {
 	    mode = ResolutionMode.values()[Globals.CURR_SCREEN_INDEX];
       }
       if (mode != ResolutionMode.Full) {

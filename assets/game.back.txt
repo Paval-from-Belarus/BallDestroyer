@@ -1,19 +1,19 @@
 #Field's properties
 Ratio=0.500
-Blocks=[Killer, Killer, Plain, Plain, Plain, HealBonus, DamageBonus, Plain, HealBonus, Plain, Plain, Plain, MultiTrampoline, Destroyed, DamageBonus, DamageBonus, HealBonus, HealBonus, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed]
+Blocks=[Killer, Killer, Plain, Plain, Plain, HealBonus, DamageBonus, Destroyed, Destroyed, Plain, Destroyed, Plain, MultiTrampoline, Destroyed, Destroyed, DamageBonus, Destroyed, HealBonus, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed]
 
 #Players' properties
 ##Name mapping
-John=>0
-Ivan=>1
-Ignat=>2
+null=>0
+null=>1
+null=>2
 
 ##Players' configuration
 ###Player
 Id=0
-Score=7
+Score=8
 TrampolineCnt=2
-Balls=[{Pos=(x=35,y=171),Velocity=(-80.0,-140.0),Radius=27.500}]
+Balls=[{Pos=(x=130,y=414),Velocity=(-80.0,140.0),Radius=27.500}]
 ###Player
 Id=1
 Score=0

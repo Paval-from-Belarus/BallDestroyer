@@ -2,6 +2,7 @@ package com.baller.game.players;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.baller.game.Game;
 import com.baller.game.field.BlockCollision;
 import com.baller.game.field.BrickBlock;
 import com.baller.game.field.GameField;
@@ -110,7 +111,7 @@ public static final int DEFAULT_TRAMPOLINE_CNT = 1;
 public static final int DEFAULT_BALL_CNT = 1;
 public static final int DEFAULT_SCORE = 0;
 
-enum State {Blocked, Alive, Defeated}
+public enum State {Blocked, Alive, Defeated}
 
 public static class Id {
       int value;
@@ -178,11 +179,13 @@ public void draw(SpriteBatch batch) {
 	    ball.draw(batch);
       }
 }
+public void boost(Game.HardnessLevel level) {
+      balls.forEach(ball -> ball.boost(level.ratio()));
+}
 
 public void update(float dt) {
       if (state == State.Blocked)
 	    return;
-
       for (Ball ball : balls)
 	    ball.update(dt);
 }

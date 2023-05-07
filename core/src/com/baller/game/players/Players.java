@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import com.baller.game.players.Player.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class Players {
 public static final int DEFAULT_PLAYER_CNT = 1;
@@ -84,6 +85,17 @@ private @NotNull Player[] getVerifiedPlayers() {
 		 .toArray(Player[]::new);
 }
 
+public void forEach(Player.State state, Consumer<Player> action) {
+      Player[] players = new Player[0];
+      switch (state) {
+	    case Alive -> players = getVerifiedPlayers();
+	    // TODO: 07/05/2023
+	    case Blocked, Defeated -> {}
+      }
+      for (var player : players) {
+	    action.accept(player);
+      }
+}
 public @NotNull Player.Properties[] getVerified() {
       return Arrays.stream(getVerifiedPlayers())
 		 .map(Player::getProperties)

@@ -8,6 +8,8 @@ public class Globals {
     public enum Color {Red, Blue, Green};
     public static String[] SCREEN_RESOLUTIONS = {"Minimal", "Broad", "Full Screen"};
     public static int CURR_SCREEN_INDEX = 0;
+    public static int CURR_MODE_INDEX = 0;
+    public static float CURR_LUCKY_LEVEL = 0.5f;
     public static Vector2 DEFAULT_BALL_POS = new Vector2(150f, 130f);
     public static Vector2 DEFAULT_BALL_VELOCITY = new Vector2(-80f, 140f);
     public static int BALL_SIZE = 55;

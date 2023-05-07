@@ -108,7 +108,9 @@ Ball(Texture texture) {
 public void freeze() {
       this.velocity = new Vector2(0f, 0f);
 }
-
+public void boost(float ratio) {
+      this.velocity = this.velocity.scl(ratio);
+}
 public void playAnimation() {
       animation.accept(this.spriteBack);
 }

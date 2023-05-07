@@ -84,15 +84,6 @@ public void addPauseListener(EventListener listener) {
 	    public void clicked(InputEvent event, float x, float y) {
 		  listener.handle(event);
 	    }
-	    @Override
-	    public boolean keyDown(InputEvent event, int keycode) {
-		  boolean response = false;
-		  if(keycode == Input.Keys.ESCAPE){
-			listener.handle(event);
-			response = true;
-		  }
-		  return response;
-	    }
       });
 }
 

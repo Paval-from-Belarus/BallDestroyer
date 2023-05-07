@@ -14,44 +14,56 @@ import static com.baller.game.Game.Stage.GamePause;
 import static com.baller.game.Game.Stage.GameProcess;
 
 public class GameController {
-/**<code>OnScreenChange</code> event corrupted when user change current menu. In this case, handle object
+/**
+ * <code>OnScreenChange</code> event corrupted when user change current menu. In this case, handle object
  * is <code>UserInterface.ScreenType</code>
- * */
-public enum Event {OnResolutionChange, onStageChange, OnProgressSave, OnProgressRestore, OnSkinChange, OnProgramExit}
+ */
+public enum Event {OnResolutionChange, onStageChange, OnProgressSave, OnProgressRestore, OnSkinChange, OnProgramExit,
+onGameRebuild}
 
 private Game.Stage stage;
 private UserInterface ui;
 private Map<Event, List<Consumer<Object>>> callbackMap;
 private Object lastHandle;
 
-GameController() {
+GameController(Game.Stage initial) {
       callbackMap = new HashMap<>();
       ui = new UserInterface();
+      stage = initial;
 }
 
 public void setViewport(Viewport port) {
       ui.setViewport(port);
 }
-public void setScore(Integer score){
+
+public void setScore(Integer score) {
       ui.setComponent(UserClick.Id.LBL_GAME_SCORE, score);
 }
+
 public void dispatchInput() {
       List<UserClick.Id> clicks = ui.getUserClick();
       for (UserClick.Id id : clicks) {
-            var event = convertClick(id);
-            event.ifPresent(self -> throughCallback(self, null));
+	    var event = convertClick(id);
+	    event.ifPresent(self -> throughCallback(self, null));
       }
 }
-private Optional<Event> convertClick(UserClick.Id id){
-      Optional<Event> result = Optional.empty();
-      switch(id){
-            case BTN_GAME_PAUSE -> setStage(GamePause);
-            case BTN_GAME_RESUME -> setStage(GameProcess);
-            case BTN_GAME_SAVE -> result = Optional.of(Event.OnProgressSave);
-            case BTN_GAME_RESTORE -> result = Optional.of(Event.OnProgressRestore);
-            case UI_RESOLUTION -> result = Optional.of(Event.OnResolutionChange);
+
+private Optional<Event> convertClick(UserClick.Id id) {
+      Event event = null;
+      switch (id) {
+	    case BTN_GAME_PAUSE -> setStage(GamePause);
+	    case BTN_GAME_RESUME -> setStage(GameProcess);
+	    case BTN_GAME_SAVE -> event = Event.OnProgressSave;
+	    case BTN_GAME_RESTORE -> event = Event.OnProgressRestore;
+	    case UI_RESOLUTION -> event = Event.OnResolutionChange;
+	    case BTN_SETTINGS_SCREEN -> setStage(Game.Stage.Settings);
+	    case BTN_DISCARD_SETTINGS -> setStage(stage.getLast());
+	    case BTN_ACCEPT_SETTINGS -> {
+		  setStage(stage.getLast());
+		  event = Event.onGameRebuild;
+	    }
       }
-      return result;
+      return Optional.ofNullable(event);
 }
 
 public void sendMessage(Message.Type type, MessageInfo info, Supplier<Boolean> ruleHandler) {
@@ -66,18 +78,29 @@ private void loopHandler(Supplier<Boolean> ruler, Runnable lastTask) {
       }
       lastTask.run();
 }
-private void throughCallback(Event event, Object handle){
+
+private void throughCallback(Event event, Object handle) {
       var list = callbackMap.get(event);
-      if(list == null)
-            return;
-      for(var callback : list)
-            callback.accept(handle);
+      if (list == null)
+	    return;
+      for (var callback : list)
+	    callback.accept(handle);
 }
-private void setStage(Game.Stage stage){
+private void setStage(Game.Stage stage) {
+      switch (stage) {
+	    case GameProcess, GamePause -> {
+		  if (this.stage != GameProcess && this.stage != GamePause) {
+			ui.setScreen(ScreenType.Game);
+		  }
+	    }
+	    case Settings -> ui.setScreen(ScreenType.Settings);
+	    case MainMenu -> ui.setScreen(ScreenType.MainMenu);
+      }
       this.stage = stage;
       callbackMap.getOrDefault(Event.onStageChange, List.of())
-          .forEach(action -> action.accept(ui.getScreen()));
+	  .forEach(action -> action.accept(ui.getScreen()));
 }
+
 public void addCallback(Event event, Consumer<Object> callback) {
       var list = callbackMap.getOrDefault(event, new ArrayList<>());
       list.add(callback);
@@ -93,14 +116,15 @@ public void removeCallback(@NotNull Event event, @NotNull Consumer<Object> remov
 
 private void setScreen(ScreenType type) {
       ui.setScreen(type);
-      switch(type){
-            case Game -> setStage(GameProcess);
-            case Settings -> setStage(Game.Stage.Settings);
-            case MainMenu -> setStage(Game.Stage.MainMenu);
+      switch (type) {
+	    case Game -> setStage(GameProcess);
+	    case Settings -> setStage(Game.Stage.Settings);
+	    case MainMenu -> setStage(Game.Stage.MainMenu);
       }
 }
+
 public void init() {
-      stage = GameProcess;
+//      setStage(GameProcess);
       setScreen(ScreenType.Game);
 }
 

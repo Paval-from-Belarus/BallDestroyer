@@ -15,7 +15,6 @@ import com.baller.game.screens.SettingsScreen;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class UserInterface {
@@ -49,7 +48,10 @@ public void setViewport(Viewport viewport){
 	this.viewport = viewport;
 }
 public static class UserClick {
-      public enum Id {BTN_GAME_PAUSE, BTN_GAME_SAVE, BTN_GAME_RESUME, BTN_GAME_RESTORE, LBL_GAME_SCORE, UI_RESOLUTION, BtnSettings, BtnMainMenu}
+      public enum Id {BTN_GAME_PAUSE, BTN_GAME_SAVE, BTN_GAME_RESUME, BTN_GAME_RESTORE, LBL_GAME_SCORE, UI_RESOLUTION,
+	    BTN_SETTINGS_SCREEN, BTN_HARDNESS_LEVEL, BTN_FORTUNE_LEVEL, BTN_DISCARD_SETTINGS, BTN_FIELD_RATIO, BTN_LUCKY,
+	    BTN_ACCEPT_SETTINGS,
+	    BtnSettings, BtnMainMenu}
 
       public Id getId() {
 	    return value;
@@ -110,9 +112,10 @@ public void hideMessage() {
 public void setScreen(ScreenType type) {
       switch (type) {
 	    case Game -> mainScreen = new GameScreen(this.skin, this.viewport);
-	    case Settings -> mainScreen = new SettingsScreen();
+	    case Settings -> mainScreen = new SettingsScreen(this.skin, this.viewport);
 	    case MainMenu -> mainScreen = new MainMenuScreen();
       }
+      screenType = type;
       mainScreen.acceptClicks(clicksMapper);
 }
 
@@ -132,10 +135,13 @@ public @NotNull List<UserClick.Id> getUserClick() {
       messages.clear();
       return list;
 }
-
+public ScreenType getScreenType(){
+      return screenType;
+}
 public Screen getScreen() {
       return mainScreen;
 }
 
+private ScreenType screenType;
 private ClickScreen mainScreen;
 }

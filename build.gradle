@@ -54,6 +54,7 @@ project(":core") {
     apply plugin: "java-library"
 
     dependencies {
+        api "org.javatuples:javatuples:1.2"
         api "com.badlogicgames.gdx:gdx:$gdxVersion"
         api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
         api 'com.google.code.gson:gson:2.8.2'
