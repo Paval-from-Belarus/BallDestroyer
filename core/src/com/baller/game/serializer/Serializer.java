@@ -116,7 +116,7 @@ private void saveAsText(Path destPath) throws IOException {
       Files.writeString(destPath, content);
 }
 
-private void applyCopy(Serializer father) {
+void applyCopy(Serializer father) {
       this.nameMapper = father.nameMapper;
       this.players = father.players;
       this.field = father.field;

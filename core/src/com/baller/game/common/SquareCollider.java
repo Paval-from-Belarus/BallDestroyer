@@ -11,21 +11,20 @@ public class SquareCollider implements Collider {
  */
 public enum SideType {Top, Right, Bottom, Left, None}
 
-private final int width;
-private final int height;
+private final float width;
+private final float height;
 private Point center;
 private float a1, b1;
 private float a2, b2;
 private SideType lastSide;
-
-private SquareCollider(int width, int height) {
+private SquareCollider(float width, float height) {
       this.width = width;
       this.height = height;
       center = new Point(0, 0);
       updateSides();
 }
 
-public SquareCollider(int width, int height, Point center) {
+public SquareCollider(float width, float height, Point center) {
       this(width, height);
       move(center);
 }
@@ -37,14 +36,14 @@ public SideType getCollisionSide() {
       return side;
 }
 
-private Point upperBound() {
+private Vector2 upperBound() {
       Point center = center();
-      return new Point(center.x - (width() >> 1), center.y + (height() >> 1));
+      return new Vector2(center.x - width() / 2.0f, center.y + height() / 2.0f);
 }
 
-private Point lowerBound() {
+private Vector2 lowerBound() {
       Point center = center();
-      return new Point(center.x + (width() >> 1), center.y - (height() >> 1));
+      return new Vector2(center.x + width() / 2.0f, center.y - height() / 2.0f);
 }
 
 @Override
@@ -53,9 +52,9 @@ public boolean collides(Collider square) {
 	    return false;
       SquareCollider other = (SquareCollider) square;
       boolean isCollides = false;
-      Point[] points = getPoints();
-      Point upper = other.upperBound();
-      Point lower = other.lowerBound();
+      Vector2[] points = getPoints();
+      Vector2 upper = other.upperBound();
+      Vector2 lower = other.lowerBound();
       int i;
       for (i = 0; i < points.length && !isCollides; i++) {
 	    isCollides = points[i].x >= upper.x && points[i].x <= lower.x &&
@@ -66,7 +65,7 @@ public boolean collides(Collider square) {
       }
       return isCollides;
 }
-private void setLastCollision(Point touched){
+private void setLastCollision(Vector2 touched){
       lastSide = getSideType(touched);
 }
 
@@ -74,7 +73,7 @@ private void setLastCollision(Point touched){
  * this method is only used to set side of collision by external object
  * @param point is supposed to be inside
  * */
-private SideType getSideType(Point point) {
+private SideType getSideType(Vector2 point) {
       final Point center = center();
       float xOffset = center.x - point.x;
       float yOffset = center.y - point.y;
@@ -92,11 +91,11 @@ private SideType getSideType(Point point) {
       return sides[index];
 }
 
-private int height() {
+private float height() {
       return height;
 }
 
-private int width() {
+private float width() {
       return width;
 }
 
@@ -194,16 +193,17 @@ public void move(Point center) {
       updateSides();
 }
 
-public Point[] getPoints() {
-      int[] xOffsets = {0, width, 0, -width};
-      int[] yOffsets = {0, 0, -height, -height};
-      var points = new Point[5];
-      Point upper = upperBound();
-      for (int i = 0; i < points.length - 1; i++) {
-	    points[i] = new Point(upper.x + xOffsets[i], upper.y + yOffsets[i]);
+public Vector2[] getPoints() {
+      int diff = 0;
+      float[] xOffsets = {0 + diff, width + diff, 0 + diff, -width + diff };
+      float[] yOffsets = {0, 0, -height, -height};
+      var vectors = new Vector2[5];
+      Vector2 upper = upperBound();
+      for (int i = 0; i < vectors.length - 1; i++) {
+	    vectors[i] = new Vector2(upper.x + xOffsets[i], upper.y + yOffsets[i]);
       }
-      points[4] = center();
-      return points;
+      vectors[4] = new Vector2(center().x, center().y);
+      return vectors;
 }
 
 public Point center() {

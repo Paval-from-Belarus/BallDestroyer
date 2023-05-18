@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import java.awt.*;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -81,8 +83,7 @@ public static final int LeftSide = 1;
 public static final int BottomSide = 2;
 public static final int RightSide = 3;
 public static final int TopSide = 4;
-
-public static class Message {
+public static class Message implements Serializable {
       private Object handle;
       private Event event;
       private Message(Event event) {
@@ -135,7 +136,7 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 		  if (player.getVelocity().y < 0)
 			player.reflect(AnimatedObject.Axis.Horizontal);
 	    }
-	    case Movement -> {
+	    case Movement, EmptyField -> {
 		  //	  System.out.println("Hello ball!");
 	    }
       }

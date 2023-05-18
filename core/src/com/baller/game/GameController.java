@@ -62,6 +62,7 @@ private Optional<Event> convertClick(UserClick.Id id) {
 		  setStage(stage.getLast());
 		  event = Event.onGameRebuild;
 	    }
+	    case BTN_EXIT -> event = Event.OnProgramExit;
 	    case MSG_GAME_PROCESS -> event = Event.OnGameRestart;
       }
       return Optional.ofNullable(event);

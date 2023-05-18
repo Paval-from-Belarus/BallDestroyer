@@ -1,6 +1,6 @@
 #Field's properties
-Ratio=0.700
-Blocks=[Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Plain, Destroyed, Destroyed, Plain, Plain, Plain, Plain, Destroyed, Destroyed, Plain, Plain, Plain]
+Ratio=0.300
+Blocks=[Destroyed, Destroyed, DamageBonus, HealBonus, DamageBonus, DamageBonus, Destroyed, Plain, Plain, Plain, HealBonus, DamageBonus]
 
 #Players' properties
 ##Name mapping
@@ -11,9 +11,9 @@ Ignat=>2
 ##Players' configuration
 ###Player
 Id=0
-Score=4
+Score=-1
 TrampolineCnt=1
-Balls=[{Pos=(x=294,y=87),Velocity=(80.0,-140.0),Radius=27.500}]
+Balls=[{Pos=(x=173,y=132),Velocity=(80.0,140.0),Radius=27.500}]
 ###Player
 Id=1
 Score=0
@@ -26,8 +26,8 @@ TrampolineCnt=1
 Balls=[{Pos=(x=177,y=157),Velocity=(-80.0,140.0),Radius=27.500}]
 
 #Settings
-Resolution=Tiny
+Resolution=Broad
 Hardness=Easy
-LuckyLevel=0.0
+LuckyLevel=0.5
 SkinName=White
 

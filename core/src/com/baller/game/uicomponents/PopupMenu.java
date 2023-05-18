@@ -18,6 +18,7 @@ private static final String BTN_SAVE_TEXT = "Save Game";
 private static final String BTN_RESUME_TEXT = "Resume Game";
 private static final String BTN_RESTORE_TEXT = "Last Saved";
 private static final String BTN_SETTINGS_TEXT = "Settings";
+private static final String BTN_EXIT_TEXT = "Exit";
 private static final String BUTTON_STYLE = "BUTTON_MENU";
 private static int DEFAULT_WIDTH = (int) (Globals.FIELD_WIDTH * 0.7f);
 private static int DEFAULT_HEIGHT = (int) (Globals.FIELD_HEIGHT * 0.7f);
@@ -31,6 +32,7 @@ private final Button btnSave;
 private final Button btnResume;
 private final Button btnRestore;
 private final Button btnSettings;
+private final Button btnExit;
 
 {
       background = new Texture("block.png");
@@ -47,6 +49,7 @@ public PopupMenu(Skin skin){
       this.btnResume = new TextButton(PopupMenu.BTN_RESUME_TEXT, skin);
       this.btnRestore = new TextButton(PopupMenu.BTN_RESTORE_TEXT, skin);
       this.btnSettings = new TextButton(PopupMenu.BTN_SETTINGS_TEXT, skin);
+      this.btnExit = new TextButton(PopupMenu.BTN_EXIT_TEXT, skin);
 //      setTitle();
       setButtons();
 }
@@ -64,7 +67,7 @@ private void setTitle(){
 private void setButtons(){
       final int xOffset = (getPos().x >> 1) - 10;
       int yOffset = getPos().y + (getHeight() >> 1) - (getHeight() >> 2) + 40;
-      List<Button> buttons = List.of(btnResume, btnSettings, btnSave, btnRestore);
+      List<Button> buttons = List.of(btnResume, btnSettings, btnSave, btnRestore, btnExit);
       for(Button button : buttons){
             button.setSize(
                 Globals.convertWidth(BUTTON_WIDTH),
@@ -109,7 +112,14 @@ public void addSettingsListener(EventListener listener) {
                listener.handle(event);
          }
       });
-
+}
+public void addExitListener(EventListener listener) {
+      btnExit.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                  listener.handle(event);
+            }
+      });
 }
 public void dispose(){
       background.dispose();

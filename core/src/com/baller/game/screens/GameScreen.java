@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.baller.game.Globals;
 import com.baller.game.UserInterface;
 import com.baller.game.UserInterface.UserClick;
 import com.baller.game.uicomponents.MessageBox;
@@ -61,6 +62,7 @@ public GameScreen(Skin skin, Viewport port) {
       menu.addSaveListener(this::onSaveButtonClicked);
       menu.addRestoreListener(this::onRestoreButtonClicked);
       menu.addSettingsListener(this::onSettingsClicked);
+      menu.addExitListener(this::onProgramExit);
       menu.hide();
       messageBox = new MessageBox(skin);
       messageBox.addRestartListener(this::onRestartClicked);
@@ -71,6 +73,10 @@ private boolean onRestartClicked(Event event) {
 	    messageBox.hide();
 	    bubblesClick(Id.MSG_GAME_PROCESS);
       }
+      return true;
+}
+private boolean onProgramExit(Event event) {
+      bubblesClick(Id.BTN_EXIT);
       return true;
 }
 private boolean onPauseButtonClicked(Event event) {
@@ -106,7 +112,7 @@ private boolean onSettingsClicked(Event event) {
 
 @Override
 public List<UserClick> getAll() {
-      final UserClick.Id[] keys = {Id.BTN_GAME_SAVE, Id.BTN_GAME_RESTORE,
+      final UserClick.Id[] keys = {Id.BTN_GAME_SAVE, Id.BTN_GAME_RESTORE, Id.BTN_EXIT,
 	  Id.BTN_GAME_RESUME, Id.BTN_GAME_PAUSE, Id.LBL_GAME_SCORE, Id.MSG_GAME_PROCESS};
       List<UserClick> list = new ArrayList<>(keys.length);
       for (UserClick.Id id : keys) {
@@ -131,6 +137,9 @@ public void render(float delta) {
       batch.end();
       stage.act();
       stage.draw();
+      if (!Globals.PLAYER_NAME.equalsIgnoreCase(bar.playerName.getText().toString())) {
+	    bar.playerName.setText(Globals.PLAYER_NAME);
+      }
       if (!Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
 	    lastEventTime += delta;
       }

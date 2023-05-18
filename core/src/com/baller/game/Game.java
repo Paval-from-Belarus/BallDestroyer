@@ -1,10 +1,10 @@
 package com.baller.game;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Null;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.*;
 import com.baller.game.GameController.Event;
@@ -15,13 +15,14 @@ import java.io.File;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import com.baller.game.players.Ball;
 import com.baller.game.players.Player;
 import com.baller.game.players.Players;
+import com.baller.game.serializer.Proxy;
 import com.baller.game.serializer.Serializer;
 import org.javatuples.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.baller.game.UserInterface.*;
@@ -122,6 +123,7 @@ private void initField(float dt) {
       field = new GameField(players.getAll());
       if (field.verify(id)) {
 	    players.release(id);
+	    setPlayerName("John");
       }
       field.setRatio(Globals.FIELD_RATIO);
       field.rebuild();
@@ -151,14 +153,14 @@ private Optional<Serializer> findSavedGame(SavedMode mode) {
       Pair<File, File> filePair = getBackFiles(mode);
       jsonBack = filePair.getValue0();
       txtBack = filePair.getValue1();
-      Serializer serializer = new Serializer();
-      if (txtBack.exists() && serializer.fromFile(txtBack.getAbsolutePath(), Serializer.SerializationMode.Text)) {
-	    return Optional.of(serializer);
+      Optional<Serializer> serializer = Optional.empty();
+      if (txtBack.exists()) {
+	    serializer = Proxy.fromFile(txtBack.getAbsolutePath(), Proxy.SerializationMode.Text);
       }
-      if (jsonBack.exists() && serializer.fromFile(jsonBack.getAbsolutePath(), Serializer.SerializationMode.Json)) {
-	    return Optional.of(serializer);
+      if (serializer.isEmpty() && jsonBack.exists()) {
+	    serializer = Proxy.fromFile(jsonBack.getAbsolutePath(), Proxy.SerializationMode.Json);
       }
-      return Optional.empty();
+      return serializer;
 }
 
 private void load(@Nullable Object rawMode) {
@@ -170,8 +172,10 @@ private void load(@Nullable Object rawMode) {
 	    this.field = s.field.construct();
 	    this.field.addPlayers(s.players);
 	    this.players = new Players(s.players, s.nameMapper);
-	    if (this.field.verify(s.players[0].getId())) {
-		  players.release(s.players[0].getId());
+	    var id = s.players[0].getId();
+	    if (this.field.verify(id)) {
+		  players.release(id);
+		  setPlayerName(players.getName(id));
 	    }
 	    this.field.rebuild();
 	    this.settings = s.settings.construct();
@@ -185,7 +189,11 @@ private void load(@Nullable Object rawMode) {
 	    controller.removeCallback(Event.OnProgressSave, this::load);
       }, () -> System.out.println("NO CONFIG FILE"));
 }
+private void debugRender(float delta) {
+      if (Gdx.input.isButtonPressed(Input.Keys.LEFT)) {
 
+      }
+}
 /**
  * @param rawMode is any handle that will be skipped
  */
@@ -201,9 +209,10 @@ private void save(Object rawMode) {
 		.setPlayers(players)
 		.setGameField(field)
 		.setSettings(settings);
+	    Proxy proxy = new Proxy(serializer);
 	    Runnable task = () -> {
-		  serializer.toFile(filePair.getValue0().toString(), Serializer.SerializationMode.Json);
-		  serializer.toFile(filePair.getValue1().toString(), Serializer.SerializationMode.Text);
+		  proxy.toFile(filePair.getValue0().toString(), Proxy.SerializationMode.Json);
+		  proxy.toFile(filePair.getValue1().toString(), Proxy.SerializationMode.Text);
 	    };
 	    executor = new Thread(task);
       } catch (Exception e) {
@@ -211,6 +220,10 @@ private void save(Object rawMode) {
 	    return;
       }
       executor.start();
+}
+
+private void setPlayerName(@NotNull String name) {
+      Globals.PLAYER_NAME = name;
 }
 
 private void defaultRenderHandler(float dt) {
@@ -305,12 +318,14 @@ private void changeResolution(@Nullable Object rawMode) {
       }
       settings.setResolution(mode);
 }
+
 private void changeLuckyLevel(@Nullable Object value) {
       if (value != null) {
 	    Globals.CURR_LUCKY_LEVEL = (Float) value;
       }
       settings.setLuckyLevel(Globals.CURR_LUCKY_LEVEL);
 }
+
 private void dispatchPlayer(Player player) {
       Ball[] balls = player.getBalls();
       field.mark(player.getId());

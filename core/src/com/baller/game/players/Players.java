@@ -54,6 +54,9 @@ public Optional<Player.Id> get(String name) {
       }
       return Optional.ofNullable(id);
 }
+public @NotNull String getName(Player.Id id) {
+      return playersMap.get(id);
+}
 
 public Optional<Player> get(Player.Id id) {
       return players.stream()
@@ -87,12 +90,11 @@ private @NotNull Player[] getVerifiedPlayers() {
 }
 
 public void forEach(Player.State state, Consumer<Player> action) {
-      Player[] players = new Player[0];
-      switch (state) {
-	    case Alive -> players = getVerifiedPlayers();
-	    // TODO: 07/05/2023
-	    case Blocked, Defeated -> {}
-      }
+      Player[] players;
+      players = switch(state) {
+	    case Alive, Victory -> getVerifiedPlayers();
+	    case Blocked, Defeated -> new Player[0];
+      };
       for (var player : players) {
 	    action.accept(player);
       }

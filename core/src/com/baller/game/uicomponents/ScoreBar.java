@@ -1,24 +1,17 @@
 package com.baller.game.uicomponents;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.baller.game.Globals;
-import com.baller.game.UserInterface;
 
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.util.List;
 
 import static com.baller.game.UserInterface.*;
 
@@ -28,7 +21,10 @@ private static final String BUTTON_STYLE = "PAUSE_BUTTON";
 private static final int DEFAULT_WIDTH = 700;
 private static final int DEFAULT_HEIGHT = 50;
 private static final float DEFAULT_ALPHA = 0.3f;
-private final Label title;
+private final Label scoreTitle;
+public final Label playerName;
+//private final Label time;
+private final Label gameName;
 private final Button pause;
 private Integer score;
 private final Skin skin;
@@ -45,22 +41,31 @@ public ScoreBar(Skin skin) {
       setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
       setPos(Globals.FIELD_WIDTH >> 1, Globals.FIELD_HEIGHT - (DEFAULT_HEIGHT >> 1));
       this.skin = skin;
-      this.title = new Label(ScoreBar.TITLE_TEXT, skin);
-      setTitle();
+      this.scoreTitle = new Label(ScoreBar.TITLE_TEXT, skin);
+      playerName = new Label("John", skin);
+      gameName = new Label("Game Destroyer", skin);
+      setLabels();
       this.pause = new TextButton("PAUSE", skin);//, BUTTON_STYLE);
       setPauseButton();
 }
 
-private void setTitle() {
-      final int xOffset = getPos().x - getWidth() / 2 + getWidth() / 8;
-      final int yOffset = getPos().y - 5;
-      title.setAlignment(Align.left);
-      title.setFontScale(2f, 2f);
-      title.setPosition(
-	  Globals.convertWidth(xOffset),
-	  Globals.convertHeight(yOffset)
-      );
-      addActor(title);
+
+private void setLabels() {
+      final int X_START_OFFSSET = getPos().x - getWidth() / 2 + getWidth() / 8;
+      final int Y_START_OFFSET = getPos().y - 5;
+      int xOffset = X_START_OFFSSET;
+      int yOffset = Y_START_OFFSET;
+      var labels = List.of(scoreTitle, playerName, gameName);
+      for (var label : labels) {
+	    label.setAlignment(Align.left);
+	    label.setFontScale(2f, 2f);
+	    label.setPosition(
+		Globals.convertWidth(xOffset),
+		Globals.convertHeight(yOffset)
+	    );
+	    xOffset += 150;
+	    addActor(label);
+      }
 }
 
 private final static int BUTTON_WIDTH = 50;
@@ -93,7 +98,7 @@ public void addPauseListener(EventListener listener) {
  * rocks accept any value that will used to show current score. Current score will in form of Integer
  */
 public void onScoreChanged(RocksHandler rocks) {
-      rocks.accept(score -> title.setText((Integer) score));
+      rocks.accept(score -> scoreTitle.setText("Score:" + score));
 }
 
 public void dispose() {

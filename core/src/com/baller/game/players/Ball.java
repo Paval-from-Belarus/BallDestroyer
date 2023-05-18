@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.baller.game.common.AnimatedObject;
 import com.baller.game.Globals;
+import com.baller.game.common.CircleCollider;
 import com.baller.game.common.SquareCollider;
 import com.baller.game.serializer.AbstractSerializable;
 

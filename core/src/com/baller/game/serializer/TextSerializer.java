@@ -3,10 +3,14 @@ package com.baller.game.serializer;
 import com.baller.game.Settings;
 import com.baller.game.field.GameField;
 import com.baller.game.players.Player;
+import com.baller.game.players.Players;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.geom.Point2D;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -15,6 +19,20 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TextSerializer {
+private static String serialize(java.io.Serializable... objects) {
+      StringBuilder strText = new StringBuilder();
+      for (var object : objects) {
+	    Class<?> classType = object.getClass();
+	    Field[] fields = classType.getDeclaredFields();
+	    for (Field field : fields) {
+		  if (!Modifier.isTransient(field.getModifiers()) || field.isAnnotationPresent(Serial.class)) {
+
+		  }
+		  var topLeft = new Point2D.Float(1.0f, 1.0f);
+	    }
+      }
+      return null;
+}
 private String collectFields(Serializable<?> serializable) throws IllegalAccessException {
       String[] labels = serializable.getFieldNames();
       Field[] fields = serializable.getClass().getDeclaredFields();
@@ -102,17 +120,22 @@ public static @Nullable List<Object> arrayFromString(String content, Function<St
 }
 
 private Optional<Map<Integer, String>> getNameMapper(String source) {
-      Pattern pattern = Pattern.compile("([a-zA-Z]+=>[0-9]+\n)");
-      Matcher matcher = pattern.matcher(source);
-      if (!matcher.find())
+      String[] items = source.split("##Name mapping");
+      if (items.length < 2) {
 	    return Optional.empty();
+      }
+      source = items[1];
+      Pattern pattern = Pattern.compile("([a-zA-Z]+=>[0-9]+)");
+      Matcher matcher = pattern.matcher(source);
       Map<Integer, String> nameMapper = new HashMap<>();
-      for (int i = 1; i < matcher.groupCount(); i++) {
-	    String[] pieces = matcher.group(i).split("=>");
+      while (matcher.find()) {
+	    String[] pieces = matcher.group(1).split("=>");
 	    Integer id = Integer.parseInt(pieces[1]);
 	    String name = pieces[0];
 	    nameMapper.put(id, name);
       }
+      if (nameMapper.isEmpty())
+	    return Optional.empty();
       return Optional.of(nameMapper);
 }
 
