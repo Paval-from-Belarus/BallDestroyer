@@ -59,6 +59,7 @@ public void acceptClicks(Map<UserClick.Id, UserClick> mapper) {
       super.acceptClicks(mapper);
       //do something with rocks
 }
+
 private void onResolutionChanged(Integer index) {
       bubblesClick(UserClick.Id.UI_RESOLUTION);
       Globals.CURR_SCREEN_INDEX = index;
@@ -74,23 +75,23 @@ private boolean onChangeProps(Event event) {
 
       var props = List.of(INITIAL_RESOLUTION_INDEX, modeIndex, luckyRatio, fieldRatio);
       var realProps = List.of(Globals.CURR_SCREEN_INDEX, Globals.CURR_MODE_INDEX,
-          Globals.CURR_LUCKY_LEVEL, Globals.FIELD_RATIO);
+	  Globals.CURR_LUCKY_LEVEL, Globals.FIELD_RATIO);
       boolean hasChanged = false;
       int index = 0;
       for (var value : props) {
-            hasChanged = !(value.equals(realProps.get(index)));
-            index += 1;
-            if (hasChanged) {
-                  break;
-            }
+	    hasChanged = !(value.equals(realProps.get(index)));
+	    index += 1;
+	    if (hasChanged) {
+		  break;
+	    }
       }
       if (!hasChanged) {
 	    onScreenReturn(event);
       } else {
-            onHardnessChanged(modeIndex);
-            onRatioChanged(fieldRatio);
-            onFortuneChanged(luckyRatio);
-            bubblesClick((UserClick.Id.BTN_ACCEPT_SETTINGS));
+	    onHardnessChanged(modeIndex);
+	    onRatioChanged(fieldRatio);
+	    onFortuneChanged(luckyRatio);
+	    bubblesClick((UserClick.Id.BTN_ACCEPT_SETTINGS));
       }
       return true;
 }

@@ -4,7 +4,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.baller.game.Game;
 import com.baller.game.Globals;
-import com.baller.game.field.BlockCollision;
+import com.baller.game.common.AnimatedObject;
+import com.baller.game.field.BonusCollision;
 import com.baller.game.field.BrickBlock;
 import com.baller.game.field.GameField;
 import com.baller.game.common.DisplayObject.*;
@@ -191,46 +192,60 @@ public void update(float dt) {
 	    ball.update(dt);
 }
 
-private void dispatchBlockEvent(BlockCollision collision) {
-      BrickBlock block = collision.getRef();
-      if (block == null || !block.isVisible())
-	    return;
-      int scoreSum = 1;
-      switch (block.getType()) {
-	    case DamageBonus -> {
-		  scoreSum = -3;
-	    }
+private void dispatchBonusEvent(BonusCollision collision) {
+      assert collision != null;
+      int scoreSum = collision.getScore();
+      switch (collision.getType()) {
+	    case DamageBonus -> {}// the bonus damaged is automatically added
 	    case Killer -> {
-		  BrickBlock[] blocks = (BrickBlock[]) collision.callback(block);
-		  scoreSum = 3;
+		  BrickBlock[] blocks = (BrickBlock[]) collision.callback(null);
 		  if (blocks != null) {
 			for (BrickBlock dummy : blocks) {
 			      dummy.setType(BrickBlock.Type.Destroyed);
 			}
 		  }
-		  block.setType(BrickBlock.Type.Plain);
+//		  block.setType(BrickBlock.Type.Plain);
 	    }
 	    case MultiTrampoline -> {
 		  int trampolineCnt = new Random().nextInt(1, 4);
-		  collision.callback(trampolineCnt);
-		  this.trampolineCnt = trampolineCnt;
+		  if (this.trampolineCnt != trampolineCnt) {
+			collision.callback(trampolineCnt);
+			this.trampolineCnt = trampolineCnt;
+		  }
+	    }
+	    case MultiBall -> {
+		  Ball collided = (Ball) collision.callback(null);
+		  assert collided != null;
+		  Ball clone = new Ball(textBall);
+		  if (collided.isVisible()) {
+			clone.setPos(collided.getPos().x , collided.getPos().y);
+			clone.setVelocity(collided.getVelocity());
+			clone.reflect(AnimatedObject.Axis.Vertical);
+		  }
+		  balls.add(clone);
 	    }
       }
       score += scoreSum;
 }
-
+public void dispatchAll(List<GameField.Message> messages, Ball ball) {
+      for (var msg : messages) {
+	    dispatch(msg, ball);
+      }
+}
 public void dispatch(GameField.Message msg, Ball ball) {
       GameField.Event event = msg.getEvent();
-      Object handle = msg.getValue();
       switch (event) {
-	    case BlockCollision -> {
-		  BlockCollision collision = (BlockCollision) msg.getValue();
-		  dispatchBlockEvent(collision);
+	    case BlockCollision -> score += 0;
+	    case BonusCollision ->  {
+		  BonusCollision collision = (BonusCollision) msg.getValue();
+		  assert collision != null;
+		  dispatchBonusEvent(collision);
 	    }
 	    case SideCollision -> {
 		  Integer side = (Integer) msg.getValue();
 		  if (side == GameField.BottomSide) {
 			if (balls.size() > 1) {
+//			      ball.setState(DisplayState.Hidden);
 			      balls.remove(ball);
 			} else {
 			      this.state = State.Defeated;

@@ -2,18 +2,17 @@ package com.baller.game.field;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import java.awt.*;
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.baller.game.Globals;
+import com.badlogic.gdx.math.MathUtils;
 import com.baller.game.common.AnimatedObject;
 import com.baller.game.common.Collider;
 import com.baller.game.common.DisplayObject;
@@ -72,20 +71,24 @@ public static class Properties extends AbstractSerializable<GameField> {
 			      .map(BrickBlock.Type::valueOf)
 			      .toArray(BrickBlock.Type[]::new);
       }
+
       @Override
-      public String[] getFieldNames(){
-	return new String[]{"ratio", "blocks"};
+      public String[] getFieldNames() {
+	    return new String[]{"ratio", "blocks"};
       }
 }
 
 public enum Event {BlockCollision, BonusCollision, SideCollision, TrampolineCollision, Movement, EmptyField}
+
 public static final int LeftSide = 1;
 public static final int BottomSide = 2;
 public static final int RightSide = 3;
 public static final int TopSide = 4;
+
 public static class Message implements Serializable {
       private Object handle;
       private Event event;
+
       private Message(Event event) {
 	    this.event = event;
       }
@@ -110,18 +113,23 @@ public static class Message implements Serializable {
 public static void DefaultDispatcher(Message msg, Ball player) {
       switch (msg.event) {
 	    case BlockCollision -> {
-		  var collision = (BlockCollision) msg.getValue();
-		  BrickBlock block = null;
-		  if (collision.getRef().isVisible()) {
-			block = collision.getRef();
-			block.setType(BrickBlock.Type.Destroyed);
-		  }
-		  if (block != null && collision.getSide() != SquareCollider.SideType.None) {
-			var side = collision.getSide();
-			AnimatedObject.Axis axis = (side == SquareCollider.SideType.Left || side == SquareCollider.SideType.Right) ?
-						       AnimatedObject.Axis.Vertical : AnimatedObject.Axis.Horizontal;
-			player.reflect(axis);
-		  }
+		  List<BrickCollision> collisions = (List<BrickCollision>) msg.getValue();
+		  collisions.forEach(collision -> {
+			var brick = collision.brick();
+			if (collision.type() != SquareCollider.SideType.None) {
+			      AnimatedObject.Axis axis = (collision.type() == SquareCollider.SideType.Left || collision.type() == SquareCollider.SideType.Right) ?
+							     AnimatedObject.Axis.Vertical : AnimatedObject.Axis.Horizontal;
+			      player.reflect(axis);
+			}
+			if (brick.isVisible() && brick.getType() != BrickBlock.Type.Invincible) {
+			      brick.setType(BrickBlock.Type.Destroyed);
+			}
+		  });
+
+	    }
+	    case BonusCollision -> {
+		  //do nothing
+
 	    }
 	    case SideCollision -> {
 		  Integer side = (Integer) msg.getValue();
@@ -130,6 +138,7 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 		  }
 		  if (side == LeftSide || side == RightSide) {
 			player.reflect(AnimatedObject.Axis.Vertical);
+			player.update(0.01f);
 		  }
 	    }
 	    case TrampolineCollision -> {
@@ -144,13 +153,22 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 
 public static BrickBlock.Type[] getRandomBricks(int brickCnt) {
       BrickBlock.Type[] brickTypes = new BrickBlock.Type[brickCnt];
-      Random random = new Random();
-      final int RANDOM_BOUND = Math.max(1, (int) (CURR_LUCKY_LEVEL * BrickBlock.Type.values().length));
+      final int[] lPivots = new int[BrickBlock.Type.values().length];
+      int pivot = 0;
+      for (int i = 0; i < BrickBlock.Type.values().length; i++) {
+	    lPivots[i] = pivot;
+	    pivot += BrickBlock.Type.values()[i].weight();
+      }
       for (int i = 0; i < brickTypes.length; i++) {
-	    int typeIndex = random.nextInt(RANDOM_BOUND);
-	    if (typeIndex == BrickBlock.Type.Destroyed.ordinal())
-		  typeIndex = BrickBlock.Type.Plain.ordinal();
-	    brickTypes[i] = BrickBlock.Type.values()[typeIndex];
+	    int weight = MathUtils.random(0, BrickBlock.Type.totalWeight() - 1);
+	    int typeIndex = 0;
+	    while (weight >= lPivots[typeIndex]) {
+		  typeIndex += 1;
+	    }
+	    brickTypes[i] = BrickBlock.Type.values()[typeIndex - 1];
+	    if (brickTypes[i] == BrickBlock.Type.Destroyed) {
+		  System.out.println("Destroyed");
+	    }
       }
       return brickTypes;
 }
@@ -168,10 +186,13 @@ private BrickBlock.Type[] blockTypes;
 private List<Trampoline> trampolines;
 private List<PlayerTrampolines> playerTrampolines;
 private List<Player.Id> players;
+private final List<FlyerBonus> bonuses;
+private List<Message> msgQueue = new ArrayList<>();
 private TexturePool textures;
 private Background background;
 
 private GameField() {
+      bonuses = new ArrayList<>();
       players = new ArrayList<>();
       textures = new TexturePool();
       background = new Background(textures.getFieldBGD());
@@ -189,6 +210,7 @@ public void addPlayers(Player.Properties[] properties) {
 			      .map(player -> new PlayerTrampolines(player.getId(), player.getTrampolineCnt()))
 			      .collect(Collectors.toList());
 }
+
 /**
  * @return verify as much players as possible
  */
@@ -226,6 +248,8 @@ public boolean remove(@NotNull Player.Id player) {
       return isRemoved;
 }
 
+private final List<FlyerBonus> removedBonuses = new ArrayList<>();
+
 public void update(float dt) {
       boolean isBlocked = false;
       int index;
@@ -237,6 +261,15 @@ public void update(float dt) {
 	    updateTrampoline(trampolines.get(index));
 	    isBlocked = isOutside(trampolines.get(index).collider());
       }
+      for (var bonus : bonuses) {
+	    var body = bonus.collider();
+	    bonus.update(dt);
+	    if (isOutside(body)) {
+		  removedBonuses.add(bonus);
+	    }
+      }
+      bonuses.removeAll(removedBonuses);
+      removedBonuses.clear();
       if (isBlocked)
 	    return;
       for (int i = 0; i < trampolines.size(); i++) {
@@ -270,6 +303,8 @@ private void updateTrampoline(Trampoline trampoline) {
 public void draw(final SpriteBatch batch) {
       background.draw(batch);
       drawables.forEach(item -> item.draw(batch));
+      assert bonuses != null;
+      bonuses.forEach(bonus -> bonus.draw(batch));
 }
 
 public void setTrampolineCnt(Player.Id id, int trampolineCnt) {
@@ -309,29 +344,62 @@ public void release() {
       currentPlayer = null;
 }
 
-public Message getMessage(Ball ball) {
+
+private List<Message> collectBonuses(Ball ball) {
+      List<Message> messages = new ArrayList<>();
+      Player.Id player = getCurrentPlayer();
+      if (player == null)
+	    return List.of();
+      var trampolines = playerTrampolines.stream().filter(trs -> trs.belongs(player)).findFirst();
+      if (trampolines.isEmpty()) {
+	    return List.of();
+      }
+      //todo: doesn't work for mutliple players
+      trampolines.get().list().forEach(trampoline -> {
+	    for (var bonus : bonuses) {
+		  if (bonus.collider().collides(trampoline.collider())) {
+			var msg = new Message(Event.BonusCollision);
+			Function<Object, Object> callback = bonus.getCallback();
+			Integer score = bonus.getScore();
+			var collision = new BonusCollision(bonus.getType(), score, callback);
+			msg.setValue(collision);
+			messages.add(msg);
+			removedBonuses.add(bonus);
+		  }
+	    }
+      });
+      bonuses.removeAll(removedBonuses);
+      removedBonuses.clear();
+      return messages;
+}
+
+public List<Message> getMessage(Ball ball) {
+      List<Message> messages = new ArrayList<>(collectBonuses(ball));
       Message msg = new Message(Event.Movement);
-      System.out.println(restBlockCnt);
       if (restBlockCnt == 0) {
 	    msg.setEvent(Event.EmptyField);
-	    return msg;
       }
       if (isOutside(ball)) {
 	    msg.setEvent(Event.SideCollision);
 	    msg.setValue(lastHandle);
-	    return msg;
+	    messages.add(msg);
+	    return messages;
       }
       //checkCollides(ball);
       if (isJumper(ball)) {
 	    msg.setEvent(Event.TrampolineCollision);
 	    msg.setValue(lastHandle);
+	    messages.add(msg);
+	    return messages;
       }
       if (isDestroyer(ball)) {
 	    msg.setEvent(Event.BlockCollision);
 	    msg.setValue(lastHandle);
       }
-      return msg;
+      messages.add(msg);
+      return messages;
 }
+
 
 public static final int TRAMPOLINE_MIN_GAP = FIELD_WIDTH / 15;
 public static final int RED_ZONE_BORDER = 40;
@@ -397,16 +465,18 @@ private void alignTrampolines(List<Trampoline> trampolines, final int height) {
 	    xOffset += pieceSize;
       }
 }
-private void onBlockStateChanged(BrickBlock block, BrickBlock.Type type){
+
+private void onBlockStateChanged(BrickBlock block, BrickBlock.Type type) {
       if (block.getType() != BrickBlock.Type.Destroyed && type == BrickBlock.Type.Destroyed)
 	    restBlockCnt -= 1;
       if (block.getType() == BrickBlock.Type.Destroyed && type != BrickBlock.Type.Destroyed)
 	    restBlockCnt += 1;
 }
+
 private BrickBlock nextBlock(int index) {
       int realIndex = index % blockTypes.length;
       BrickBlock.Type type = blockTypes[realIndex];
-      BrickBlock block = new BrickBlock(textures.getBlock(type), type);
+      BrickBlock block = new BrickBlock(textures.getBlock(), type);
       block.onStateChanged(this::onBlockStateChanged);
       return block;
 }
@@ -426,7 +496,7 @@ public void rebuild() {
       for (int i = 0; i < rowCnt; i++) {
 	    for (int j = 0; j < columnCnt; j++) {
 		  BrickBlock block = nextBlock(brickIndex);
-		  if(block.isVisible())
+		  if (block.isVisible() && block.isDestroyable())
 			restBlockCnt += 1;
 		  block.setPos(currPos.x, currPos.y);
 		  blockList.add(block);
@@ -532,52 +602,91 @@ private boolean isOutside(Collider body) {
 	    isOutside = body.collides(vertexes[iVertex], vertexes[(iVertex + 1) % vertexes.length]);
 	    iVertex++;
       }
-      lastHandle = side - 1;
+      lastHandle = side - 1; //the value of lastHandle is undefined in common case
       return isOutside;
 }
 
 private boolean isDestroyer(Ball player) {
       Collider body = player.collider();
-      if (body.center().y < RED_ZONE)
-	    return false;
-      int column = body.center().x / this.ceilWidth;
-      int row = (TABLE_HEIGHT - (body.center().y - RED_ZONE)) / this.ceilHeight;
-      if (row >= rowCnt)
-	    row -= 1;
-      int index = row * this.columnCnt + column;
-      boolean response = false;
-      if (index < blockList.size()) {
+//      if (body.center().y + < RED_ZONE)
+//	    return false;
+      boolean isDestroyer = false;
+      int index;
+      List<BrickCollision> bricks = new ArrayList<>();
+      for (index = 0; !isDestroyer && index < blockList.size(); index++) {
 	    var brick = blockList.get(index);
-	    if (brick.isVisible() && body.collides(blockList.get(index).collider())) {
-		  var side = ((SquareCollider) brick.collider()).getCollisionSide();
-		  System.out.println(side);
-		  BlockCollision collision = new BlockCollision(brick, side);
-		  setBlockCallback(collision, brick.getType());
-		  lastHandle = collision;
-		  response = true;
+	    isDestroyer = brick.isVisible() && brick.collider().collides(body);
+	    if (isDestroyer) {
+		  bricks.add(new BrickCollision(brick, ((SquareCollider) brick.collider()).getCollisionSide()));
+//		  var collision = new BonusCollision(brick, ((SquareCollider)body).getCollisionSide());
+//		  System.out.println(brick.getType());
+		  raiseBonus(brick, player);
+//		  collisions.add(collision);
 	    }
       }
-      return response;
+//      System.out.println(body.center());
+//      System.out.println(blockList.get(6).collider().center());
+//      if (isDestroyer) {
+//	    var brick = blockList.get(index - 1);
+//	    if (body.collides(brick.collider())) {
+//		  var side = ((SquareCollider) brick.collider()).getCollisionSide();
+//		  BlockCollision collision = new BlockCollision(brick, side);
+//		  setBlockCallback(collision, brick.getType());
+//		  lastHandle = collision;
+//	    }
+//      }
+      lastHandle = bricks;
+
+      return bricks.size() != 0;
+//      int column = body.center().x / this.ceilWidth;
+//      int row = (TABLE_HEIGHT - (body.center().y - RED_ZONE)) / this.ceilHeight;
+//      if (row >= rowCnt)
+//	    row -= 1;
+//      int index = row * this.columnCnt + column;
+//      boolean response = false;
+//      if (index < blockList.size()) {
+//	    var brick = blockList.get(index);
+//	    if (brick.isVisible() && body.collides(blockList.get(index).collider())) {
+//		  var side = ((SquareCollider) brick.collider()).getCollisionSide();
+//		  System.out.println(side);
+//		  BlockCollision collision = new BlockCollision(brick, side);
+//		  setBlockCallback(collision, brick.getType());
+//		  lastHandle = collision;
+//		  response = true;
+//	    }
+//      }
+//      return response;
 }
 
 private @Nullable Player.Id getCurrentPlayer() {
       return currentPlayer;
 }
 
-private void setBlockCallback(@NotNull BlockCollision collision, BrickBlock.Type type) {
-      switch (type) {
-	    case Killer -> collision.setCallback((o) -> getRow((BrickBlock) o));
-	    case MultiTrampoline -> {
-		  Player.Id player = getCurrentPlayer();
-		  if (player != null) {
-			collision.setCallback((count -> {
-			      this.setTrampolineCnt(player, (Integer) count);
-			      initAllTrampolines();
-			      absorbAll();
-			      return null;
-			}));
-		  }
-	    }
+private void raiseBonus(@NotNull BrickBlock brick, @NotNull Ball ball) {
+      if (brick.getType() != BrickBlock.Type.Invincible) {
+	    Function<Object, Object> callback = switch (brick.getType()) {
+		  case Killer -> (o) -> getRow(brick);
+		  case MultiTrampoline -> (Object count) -> {
+			this.setTrampolineCnt(getCurrentPlayer(), (Integer) count);
+			initAllTrampolines();
+			absorbAll();
+			return null;
+		  };
+		  case DamageBonus, Invincible -> (o) -> null;
+		  case MultiBall -> (o) -> ball;
+		  default -> null;
+	    };
+	    int score = switch (brick.getType()) {
+		  case Plain -> MathUtils.random(1, 4);
+		  case DamageBonus -> MathUtils.random(-5, -3);
+		  case Killer -> 3;
+		  default -> 1;
+	    };
+	    FlyerBonus bonus = new FlyerBonus(textures.getFlyerBonus(brick.getType()), brick.getType(), score, callback);
+	    assert bonuses != null;
+	    var point = brick.getPos();
+	    bonus.setPos(point.x, point.y);
+	    bonuses.add(bonus);
       }
 }
 }

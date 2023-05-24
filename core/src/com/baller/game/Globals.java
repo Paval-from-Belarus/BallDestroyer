@@ -3,15 +3,17 @@ package com.baller.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 
 public class Globals {
-    public enum Color {Red, Blue, Green};
+    public static Skin GAME_SKIN;
+    public enum Color {Red, Blue, Green}
     public static String[] SCREEN_RESOLUTIONS = {"Minimal", "Broad", "Full Screen"};
     public static int CURR_SCREEN_INDEX = 0;
     public static int CURR_MODE_INDEX = 0;
     public static String PLAYER_NAME = "John";
     public static float CURR_LUCKY_LEVEL = 0.5f;
-    public static Vector2 DEFAULT_BALL_POS = new Vector2(150f, 130f);
+    public static Vector2 DEFAULT_BALL_POS = new Vector2(260, 80f);
     public static Vector2 DEFAULT_BALL_VELOCITY = new Vector2(-80f, 140f);
     public static int BALL_SIZE = 55;
     public static Vector2 DEFAULT_TRAMPOLINE_VELOCITY = new Vector2(50f, 0f);
@@ -38,6 +40,10 @@ public class Globals {
     }
     public static float convertWidth(int width){
         return (float) WINDOW_WIDTH / FIELD_WIDTH * width;
+    }
+    static {
+        System.out.println(Gdx.graphics.getWidth());
+        System.out.println(Gdx.graphics.getHeight());
     }
     public static int convertWidth(float width){
         return (int) (width / WINDOW_WIDTH * FIELD_WIDTH);

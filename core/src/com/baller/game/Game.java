@@ -10,8 +10,10 @@ import com.badlogic.gdx.utils.viewport.*;
 import com.baller.game.GameController.Event;
 import com.baller.game.field.GameField;
 
-import java.awt.*;
+import java.awt.Point;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -43,7 +45,7 @@ public enum Stage {
 	    return last;
       }
 }
-
+private List<Pair<String, Integer>> statistics;
 public enum SavedMode {User, Internal}
 
 public enum HardnessLevel {
@@ -88,10 +90,13 @@ private Viewport viewport;
 private Consumer<Float> renderHandler;
 private AtomicBoolean isActive;
 private AtomicBoolean isFieldCreated;
+private AtomicBoolean isGameFinished;
+private Player.Id currentPlayer;
 
 {
       isFieldCreated = new AtomicBoolean(false);
       isActive = new AtomicBoolean(true);
+      isGameFinished = new AtomicBoolean(false);
       renderHandler = this::defaultRenderHandler;
 }
 
@@ -99,6 +104,7 @@ private AtomicBoolean isFieldCreated;
 public void create() {
       viewport = new FitViewport(Globals.FIELD_WIDTH, Globals.FIELD_HEIGHT);
       batch = new SpriteBatch();
+      statistics = new ArrayList<>();
       initController();
       initSettings();
 }
@@ -124,6 +130,7 @@ private void initField(float dt) {
       if (field.verify(id)) {
 	    players.release(id);
 	    setPlayerName("John");
+	    currentPlayer = id;
       }
       field.setRatio(Globals.FIELD_RATIO);
       field.rebuild();
@@ -170,11 +177,14 @@ private void load(@Nullable Object rawMode) {
       var serializer = findSavedGame(mode);
       serializer.ifPresentOrElse(s -> {
 	    this.field = s.field.construct();
+	    this.statistics = s.getStatistics();
+	    controller.setScoreTable(statistics);
 	    this.field.addPlayers(s.players);
 	    this.players = new Players(s.players, s.nameMapper);
 	    var id = s.players[0].getId();
 	    if (this.field.verify(id)) {
 		  players.release(id);
+		  currentPlayer = id;
 		  setPlayerName(players.getName(id));
 	    }
 	    this.field.rebuild();
@@ -208,7 +218,8 @@ private void save(Object rawMode) {
 	    serializer
 		.setPlayers(players)
 		.setGameField(field)
-		.setSettings(settings);
+		.setSettings(settings)
+		.setStatistics(statistics);
 	    Proxy proxy = new Proxy(serializer);
 	    Runnable task = () -> {
 		  proxy.toFile(filePair.getValue0().toString(), Proxy.SerializationMode.Json);
@@ -330,8 +341,8 @@ private void dispatchPlayer(Player player) {
       Ball[] balls = player.getBalls();
       field.mark(player.getId());
       for (Ball ball : balls) {
-	    GameField.Message msg = field.getMessage(ball);
-	    player.dispatch(msg, ball);
+	    List<GameField.Message> messages = field.getMessage(ball);
+	    player.dispatchAll(messages, ball);
       }
       player.commit();
       controller.setScore(player.getScore());
@@ -355,9 +366,29 @@ private void restartHandler(@Nullable Object handle) {
 }
 
 private void finishHandler(Players.GameResult result) {
+      if (isGameFinished.get()) {
+	    return;
+      }
+      isGameFinished.set(true);
       renderHandler = this::renderField;
       controller.addCallback(Event.OnGameRestart, this::restartHandler);
       if (result == Players.GameResult.Victory) {
+	    assert currentPlayer != null;
+	    Optional<Player> player = players.get(currentPlayer);
+	    player.ifPresent(p -> {
+		  String name = players.getName(currentPlayer);
+		  Integer score = p.getScore();
+		  boolean wasFound = false;
+		  for (var pair : statistics) {
+			wasFound = pair.getValue0().equals(name) & pair.getValue1().equals(score);
+			if (wasFound)
+			      break;
+		  }
+		  if (!wasFound) {
+			statistics.add(new Pair<>(name, score));
+		  }
+	    });
+	    controller.setScoreTable(statistics);
 	    controller.sendMessage(Message.Type.Victory, "Victory", "Play again!");
       } else {
 	    controller.sendMessage(Message.Type.Defeat, "Defeat", "Try again...");
@@ -372,8 +403,10 @@ private void dispatchField(float dt) {
 	    player.ifPresent(this::dispatchPlayer);
       }
       var result = players.getGameResult();
-      if (result != Players.GameResult.InProgress)
+      if (result != Players.GameResult.InProgress) {
+	    isGameFinished.set(false);
 	    finishHandler(result);
+      }
       players.update(dt);
       field.update(dt);
       renderField(dt);

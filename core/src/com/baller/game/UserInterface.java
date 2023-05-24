@@ -30,6 +30,7 @@ UserInterface() {
       this.messages = new HashSet<>(UserClick.Id.values().length);
       this.rocksMapper = new HashMap<>();
       initClicks();
+      Globals.GAME_SKIN = this.skin;
 }
 
 private void initClicks() {
@@ -62,7 +63,7 @@ public static class UserClick {
       public enum Id {
 	    BTN_GAME_PAUSE, BTN_GAME_SAVE, BTN_GAME_RESUME, BTN_GAME_RESTORE, LBL_GAME_SCORE, UI_RESOLUTION,
 	    BTN_SETTINGS_SCREEN, BTN_HARDNESS_LEVEL, BTN_FORTUNE_LEVEL, BTN_DISCARD_SETTINGS, BTN_FIELD_RATIO, BTN_LUCKY,
-	    BTN_ACCEPT_SETTINGS, MSG_GAME_PROCESS, BTN_EXIT,
+	    BTN_ACCEPT_SETTINGS, MSG_GAME_PROCESS, BTN_EXIT, BTN_STATISTICS,
 	    BtnSettings, BtnMainMenu
       }
 

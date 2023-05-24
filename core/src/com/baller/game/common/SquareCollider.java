@@ -1,15 +1,33 @@
 package com.baller.game.common;
 
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.baller.game.Globals;
 
 import java.awt.*;
+import java.util.List;
 import java.util.Optional;
 
 public class SquareCollider implements Collider {
 /**
  * This enum is used to check the result of collision of side
  */
-public enum SideType {Top, Right, Bottom, Left, None}
+public enum SideType {
+      Top, Right, Bottom, Left, None;
+      private SideType opposite;
+
+      static {
+	    None.opposite = None;
+	    Top.opposite = Bottom;
+	    Bottom.opposite = Top;
+	    Right.opposite = Left;
+	    Left.opposite = Right;
+      }
+
+      private SideType opposite() {
+	    return opposite;
+      }
+}
 
 private final float width;
 private final float height;
@@ -17,6 +35,7 @@ private Point center;
 private float a1, b1;
 private float a2, b2;
 private SideType lastSide;
+
 private SquareCollider(float width, float height) {
       this.width = width;
       this.height = height;
@@ -47,48 +66,87 @@ private Vector2 lowerBound() {
 }
 
 @Override
-public boolean collides(Collider square) {
-      if (!(square instanceof SquareCollider))
-	    return false;
-      SquareCollider other = (SquareCollider) square;
+public boolean collides(Collider collider) {
       boolean isCollides = false;
-      Vector2[] points = getPoints();
-      Vector2 upper = other.upperBound();
-      Vector2 lower = other.lowerBound();
-      int i;
-      for (i = 0; i < points.length && !isCollides; i++) {
-	    isCollides = points[i].x >= upper.x && points[i].x <= lower.x &&
-			     points[i].y <= upper.y && points[i].y >= lower.y;
-      }
-      if (isCollides) {
-	    other.setLastCollision(points[i - 1]);
+      if (collider instanceof SquareCollider other) {
+	    Vector2 upperBound = new Vector2();
+	    Vector2 lowerBound = new Vector2();
+	    Vector2 bound1 = other.upperBound();
+	    Vector2 bound2 = upperBound();
+	    upperBound.y = Math.max(bound1.y, bound2.y);
+	    upperBound.x = Math.min(bound1.x, bound2.x);
+	    bound1 = other.lowerBound();
+	    bound2 = lowerBound();
+	    lowerBound.y = Math.min(bound1.y, bound2.y);
+	    lowerBound.x = Math.max(bound1.x, bound2.x);
+	    isCollides = upperBound.y - lowerBound.y <= other.height() + this.height() &&
+			     lowerBound.x - upperBound.x <= other.width() + this.width();
+	    if (isCollides) {
+		  lastSide = getSideType(other);
+		  other.lastSide = lastSide.opposite();
+	    }
       }
       return isCollides;
 }
-private void setLastCollision(Vector2 touched){
-      lastSide = getSideType(touched);
-}
+
 
 /**
  * this method is only used to set side of collision by external object
+ *
  * @param point is supposed to be inside
- * */
-private SideType getSideType(Vector2 point) {
-      final Point center = center();
-      float xOffset = center.x - point.x;
-      float yOffset = center.y - point.y;
-      float xRatio = xOffset / width();
-      float yRatio = yOffset / height();
-      SideType[] sides;
-      int index;
-      if (Math.abs(xRatio) < Math.abs(yRatio)) {
-	    sides = new SideType[]{SideType.Left, SideType.Right};
-	    index = xRatio > 0 ? 1 : 0;
-      } else {
-	    sides = new SideType[]{SideType.Bottom, SideType.Top};
-	    index = yRatio > 0 ? 1 : 0;
+ */
+private SideType getSideType(Collider other) {
+      var center = other.center();
+      Vector2[] vertexes = new Vector2[] {
+	  upperBound(), upperBound().add(width(), 0.0f),
+	 lowerBound(), lowerBound().add(-width(), 0.0f)
+      };
+      Vector2 closest = vertexes[3]; //default
+      float dest = Float.POSITIVE_INFINITY;
+      for (int i = 0; i < vertexes.length; i++) {
+	    float remoted = vertexes[i].dst(center.x ,center.y);
+	    if (remoted < dest) {
+		  closest = vertexes[i];
+		  dest = remoted;
+	    }
       }
-      return sides[index];
+
+      final float diffX = other.center().x - center().x;
+      final float diffY = other.center().y - center().y;
+      float tan = diffY / diffX;
+      float angle = MathUtils.atan(tan);
+      if (diffX < 0) {
+	    angle += MathUtils.PI;
+      }
+      if (diffY < 0.3) {
+	    angle = 0.1f;
+      }
+//      if (Math.abs(diffY) < 0.3) {
+//	    angle = 0.1f;
+////	    if (diffY > 0) {
+////		  angle = Math.max(angle, 0.2f);
+////	    } else {
+////		  angle = Math.min(angle, -0.2f);
+////	    }
+//      }
+      int quarter = MathUtils.floor((angle + MathUtils.HALF_PI) / MathUtils.HALF_PI); //from -1 to
+//      quarter = quarter % 4;
+      final SideType[] sides = {SideType.Bottom, SideType.Right, SideType.Top, SideType.Top};
+      return sides[quarter];
+//      float xOffset = center.x - point.x;
+//      float yOffset = center.y - point.y;
+//      float xRatio = xOffset / width();
+//      float yRatio = yOffset / height();
+//      SideType[] sides;
+//      int index;
+//      if (Math.abs(xRatio) < Math.abs(yRatio)) {
+//	    sides = new SideType[]{SideType.Left, SideType.Right};
+//	    index = xRatio > 0 ? 1 : 0;
+//      } else {
+//	    sides = new SideType[]{SideType.Bottom, SideType.Top};
+//	    index = yRatio > 0 ? 1 : 0;
+//      }
+//      return sides[index];
 }
 
 private float height() {
@@ -191,19 +249,6 @@ public Side getSide(Point center) {
 public void move(Point center) {
       this.center = center;
       updateSides();
-}
-
-public Vector2[] getPoints() {
-      int diff = 0;
-      float[] xOffsets = {0 + diff, width + diff, 0 + diff, -width + diff };
-      float[] yOffsets = {0, 0, -height, -height};
-      var vectors = new Vector2[5];
-      Vector2 upper = upperBound();
-      for (int i = 0; i < vectors.length - 1; i++) {
-	    vectors[i] = new Vector2(upper.x + xOffsets[i], upper.y + yOffsets[i]);
-      }
-      vectors[4] = new Vector2(center().x, center().y);
-      return vectors;
 }
 
 public Point center() {

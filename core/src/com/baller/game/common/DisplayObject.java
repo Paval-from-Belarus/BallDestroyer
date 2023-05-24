@@ -8,16 +8,19 @@ import com.baller.game.Globals;
 import java.awt.*;
 
 public abstract class DisplayObject {
-public enum DisplayState {Visible, Hidden, Disabled, Static}
+public enum DisplayState {Visible, Hidden, Disabled, Static, Forced}
+
 protected Sprite spriteBack;
 protected int width;
 protected int height;
 protected Point virtualPos;
 protected DisplayState state;
-protected  DisplayObject(){
+
+protected DisplayObject() {
       state = DisplayState.Visible;
       virtualPos = new Point(0, 0);
 }
+
 protected DisplayObject(Texture texture) {
       this();
       spriteBack = new Sprite(texture);
@@ -37,26 +40,35 @@ public void setTexture(Texture texture) {
       }
       spriteBack.setOriginCenter();
 }
+
 public void setState(DisplayState state) {
       this.state = state;
 }
 
-public boolean isActive(){
+public boolean isForced() {
+      return state == DisplayState.Forced;
+}
+
+public boolean isDisabled() {
       return state != DisplayState.Disabled;
 }
+
 public boolean isVisible() {
       return state == DisplayState.Visible;
 }
+
 public boolean isStatic() {
       return state == DisplayState.Static;
 }
+
 public void setScale(float scale) {
       if (spriteBack != null)
 	    spriteBack.setScale(scale);
 }
-public void setAlpha(float alpha){
-      if(spriteBack != null)
-            spriteBack.setAlpha(alpha);
+
+public void setAlpha(float alpha) {
+      if (spriteBack != null)
+	    spriteBack.setAlpha(alpha);
 }
 
 private void adjust(int width, int height) {
@@ -74,30 +86,37 @@ public void setSize(int width, int height) {
       this.height = height;
       this.adjust(width, height);
 }
+
 public void setPos(int x, int y) {
       this.virtualPos.move(x, y);
       float realX = Globals.convertWidth(x - (this.width >> 1));
       float realY = Globals.convertHeight(y - (this.height >> 1));
       this.spriteBack.setPosition(realX, realY);
 }
-public final Point getPos(){
+
+public final Point getPos() {
       return virtualPos;
 }
 
 
 private Collider collider;
-public void setCollider(Collider collider){
+
+public void setCollider(Collider collider) {
       this.collider = collider;
 }
-public Collider collider(){
+
+public Collider collider() {
       return this.collider;
 }
+
 public boolean collides(DisplayObject other) {
       return this.collider().collides(other.collider());
 }
+
 public int getWidth() {
       return width;
 }
+
 public int getHeight() {
       return height;
 }

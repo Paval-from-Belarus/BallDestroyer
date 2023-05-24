@@ -4,6 +4,7 @@ import com.baller.game.Settings;
 import com.baller.game.field.GameField;
 import com.baller.game.players.Player;
 import com.baller.game.players.Players;
+import org.javatuples.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.geom.Point2D;
@@ -28,7 +29,6 @@ private static String serialize(java.io.Serializable... objects) {
 		  if (!Modifier.isTransient(field.getModifiers()) || field.isAnnotationPresent(Serial.class)) {
 
 		  }
-		  var topLeft = new Point2D.Float(1.0f, 1.0f);
 	    }
       }
       return null;
@@ -77,14 +77,22 @@ private String serializePlayers(Player.Properties[] players, Map<Integer, String
 private String serializeSettings(Settings settings) {
       return "#Settings\n" + settings.serializer().serialize() + "\n";
 }
-
+private String serializeStatistics(List<Pair<String, Integer>> statistics) {
+      StringBuilder strText = new StringBuilder();
+      strText.append("#Statistics");
+      for (var pair : statistics) {
+	    strText.append("[").append(pair.getValue0()).append("=>").append(pair.getValue1()).append("]\n");
+      }
+      return strText.toString();
+}
 public String toText(Serializer source) {
       StringBuilder builder = new StringBuilder();
       try {
 	    builder
 		.append(serializeField(source.field))
 		.append(serializePlayers(source.players, source.nameMapper))
-		.append(serializeSettings(source.settings));
+		.append(serializeSettings(source.settings))
+		.append(serializeStatistics(source.statistics));
       } catch (NoSuchFieldException | IllegalAccessException e) {
 	    throw new RuntimeException(e);
       }
@@ -117,6 +125,26 @@ public static @Nullable List<Object> arrayFromString(String content, Function<St
       return Arrays.stream(items)
 		 .map(mapper::apply)
 		 .collect(Collectors.toList());
+}
+private Optional<List<Pair<String,Integer>>> getStatistics(String source) {
+      String[] items = source.split("#Statistics");
+      if (items.length < 2) {
+	    return Optional.empty();
+      }
+      source = items[1];
+      Pattern pattern = Pattern.compile("\\[([a-zA-Z]+=>[0-9]+)]");
+      Matcher matcher = pattern.matcher(source);
+      List<Pair<String, Integer>> statistics = new ArrayList<>();
+      while (matcher.find()) {
+	    String[] pieces = matcher.group(1).split("=>");
+	    Integer score = Integer.parseInt(pieces[1]);
+	    String name = pieces[0];
+	    statistics.add(new Pair<>(name, score));
+      }
+      if (statistics.isEmpty()){
+	    return Optional.empty();
+      }
+      return Optional.of(statistics);
 }
 
 private Optional<Map<Integer, String>> getNameMapper(String source) {
@@ -193,12 +221,16 @@ public @Nullable Serializer fromText(String content) throws ReflectiveOperationE
       var mapper = getNameMapper(content);
       var players = getPlayers(content);
       var settings = getSettings(content);
+      var statistics = getStatistics(content);
+      if (statistics.isEmpty())
+	    return  null;
       if(field.isEmpty() || mapper.isEmpty() || players.isEmpty() || settings.isEmpty())
 	    return null;
       result.field = field.get();
       result.nameMapper = mapper.get();
       result.players = players.get();
       result.settings = settings.get();
+      result.statistics = statistics.get();
       return result;
 }
 private String serializeField(GameField.Properties props){

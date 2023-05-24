@@ -6,6 +6,7 @@ import com.baller.game.players.Player;
 import com.baller.game.field.GameField;
 import com.baller.game.players.Players;
 import com.google.gson.Gson;
+import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,14 @@ public Settings getSettings() {
       return rawSettings;
 }
 
+public List<Pair<String, Integer>> getStatistics() {
+      return statistics;
+}
+
+public void setStatistics(List<Pair<String, Integer>> statistics) {
+      this.statistics = statistics;
+}
+
 public enum SerializationMode {Json, Text}
 
 public static final String DEFAULT_NAME = "game.back";
@@ -41,7 +50,7 @@ public transient String configPath;
 private transient GameField gameField;
 private transient Players rawPlayers;
 private transient Settings rawSettings;
-
+public List<Pair<String, Integer>> statistics;
 private void setPlayersProps(Players players) throws NoSuchFieldException, IllegalAccessException {
       Player.Properties[] properties = players.getAll();
       for (var props : properties) {
@@ -100,9 +109,6 @@ public void addConfig(Path configPath) {
       this.configPath = configPath.toAbsolutePath().toString();
 }
 
-public void addHistory() {
-
-}
 
 private void saveAsJson(Path destPath) throws IOException {
       Gson gson = new Gson();

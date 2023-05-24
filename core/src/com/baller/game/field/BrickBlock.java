@@ -1,18 +1,39 @@
 package com.baller.game.field;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.MathUtils;
 import com.baller.game.common.AnimatedObject;
 import com.baller.game.common.SquareCollider;
+import com.baller.game.serializer.Serializer;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Random;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class BrickBlock extends AnimatedObject {
 /**
  * DamageBonus is used to destroy all
  * */
-public enum Type {Plain, HealBonus, DamageBonus, Killer, MultiTrampoline, Destroyed}
+public enum Type {
+      Plain, Invincible, DamageBonus, Killer, MultiTrampoline, MultiBall, Destroyed;
+      private int weight;
+      private static final int SUM_WEIGHT;
+      static {
+            Plain.weight = 7;
+            Invincible.weight = 3;
+            DamageBonus.weight = 3;
+            Killer.weight = 4;
+            MultiBall.weight = 2;
+            MultiTrampoline.weight = 2;
+            SUM_WEIGHT = Arrays.stream(values()).map(v -> v.weight).reduce(0, Integer::sum);
+      }
+      public int weight() {
+            return weight;
+      }
+      public static int totalWeight() {
+            return SUM_WEIGHT;
+      }
+}
 public static int DEFAULT_WIDTH = 100;
 public static int DEFAULT_HEIGHT = 50;
 private Type type;
@@ -20,13 +41,16 @@ private BiConsumer<BrickBlock, Type> task;
 private BrickBlock(Texture texture) {
       super(texture);
       setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-      setCollider(new SquareCollider(this.getWidth(), this.getHeight(), this.getPos()));
+      setCollider(new SquareCollider(this.getWidth() + 4, this.getHeight() + 4, this.getPos()));
       task = (block, type) ->{};
 }
 
 BrickBlock(Texture texture, Type type) {
       this(texture);
       setType(type);
+}
+public boolean isDestroyable() {
+      return type != Type.Invincible && type != Type.Destroyed;
 }
 void onStateChanged(BiConsumer<BrickBlock, Type> task){
       this.task = task;

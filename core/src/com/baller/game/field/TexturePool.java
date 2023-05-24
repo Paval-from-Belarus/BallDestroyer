@@ -7,32 +7,39 @@ import java.util.Map;
 
 public class TexturePool {
 private Texture textTrampoline;
-private Map<BrickBlock.Type, Texture> textBlocks;
+private Map<BrickBlock.Type, Texture> textBonuses;
+private Texture textBlock;
 private Texture textField;
 private Texture textBorders;
 TexturePool(){
       textTrampoline = new Texture("block.png");
       textField = new Texture("fieldBGD.png");
+      textBlock = new Texture("block.png");
       initBlocks();
 }
 private void initBlocks(){
-      textBlocks = new HashMap<>();
+      textBonuses = new HashMap<>();
+
       for(var type : BrickBlock.Type.values()){
 	    String path;
         switch (type){
 	      case DamageBonus -> path = "poison.png";
 	      case Killer -> path = "horseshoe.png";
 	      case MultiTrampoline -> path = "bottle.png";
+	      case MultiBall -> path = "voody.png";
 	      default -> path = "block.png";
 	}
-	textBlocks.put(type, new Texture(path));
+	textBonuses.put(type, new Texture(path));
       }
+}
+public Texture getBlock() {
+      return textBlock;
+}
+public Texture getFlyerBonus(BrickBlock.Type type) {
+      return textBonuses.get(type);
 }
 public Texture getTrampoline(){
 	return textTrampoline;
-}
-public Texture getBlock(BrickBlock.Type type){
-      return textBlocks.get(type);
 }
 public Texture getFieldBGD(){
       return textField;
@@ -41,7 +48,7 @@ public Texture getFieldBorders(){
       return textBorders;
 }
 public void dispose(){
-	textBlocks.forEach((key, value)->value.dispose());
+	textBonuses.forEach((key, value)->value.dispose());
 	textTrampoline.dispose();
 }
 }

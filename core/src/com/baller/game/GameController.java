@@ -2,6 +2,7 @@ package com.baller.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -39,7 +40,9 @@ public void setViewport(Viewport port) {
 public void setScore(Integer score) {
       ui.setComponent(UserClick.Id.LBL_GAME_SCORE, score);
 }
-
+public void setScoreTable(List<Pair<String, Integer>> statistics) {
+      ui.setComponent(UserClick.Id.BTN_STATISTICS, statistics);
+}
 public void dispatchInput() {
       List<UserClick.Id> clicks = ui.getUserClick();
       for (UserClick.Id id : clicks) {

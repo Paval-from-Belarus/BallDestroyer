@@ -9,11 +9,12 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.baller.game.Globals;
-import com.baller.game.UserInterface;
 import com.baller.game.UserInterface.UserClick;
+import com.baller.game.common.DisplayObject;
 import com.baller.game.uicomponents.MessageBox;
 import com.baller.game.uicomponents.PopupMenu;
 import com.baller.game.uicomponents.ScoreBar;
+import com.baller.game.uicomponents.ScoreTable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,12 +24,14 @@ import static com.baller.game.UserInterface.*;
 import static com.baller.game.UserInterface.UserClick.Id;
 
 public class GameScreen extends AbstractScreen {
+
 private static final float EVENT_DELAY = 0.3f;
 private Stage stage;
 private ScoreBar bar;
 private PopupMenu menu;
 private SpriteBatch batch;
 private MessageBox messageBox;
+private ScoreTable scoreTable;
 private float lastEventTime = 0;
 @Override
 public void showMessage(MessageInfo info) {
@@ -45,8 +48,10 @@ public void acceptClicks(Map<Id, UserClick> mapper) {
       super.acceptClicks(mapper);
       var scoreClick = mapper.get(Id.LBL_GAME_SCORE);
       var messageClick = mapper.get(Id.MSG_GAME_PROCESS);
-      assert scoreClick != null && messageClick != null;
+      var tableClick = mapper.get(Id.BTN_STATISTICS);
+      assert scoreClick != null && messageClick != null && tableClick != null;
       bar.onScoreChanged(scoreClick.rocks());
+      scoreTable.onStatisticsChanged(tableClick.rocks());
       messageBox.onMessageInfo(messageClick.rocks());
 }
 
@@ -57,6 +62,7 @@ public GameScreen(Skin skin, Viewport port) {
       stage = new Stage(port, batch);
       bar = new ScoreBar(skin);
       bar.addPauseListener(this::onPauseButtonClicked);
+      bar.addStatisticsListener(this::onStatisticsTableClicked);
       bar.show(stage);
       menu.addResumeListener(this::onResumeButtonClicked);
       menu.addSaveListener(this::onSaveButtonClicked);
@@ -67,6 +73,8 @@ public GameScreen(Skin skin, Viewport port) {
       messageBox = new MessageBox(skin);
       messageBox.addRestartListener(this::onRestartClicked);
       messageBox.hide();
+      scoreTable = new ScoreTable(skin);
+      scoreTable.hide();
 }
 private boolean onRestartClicked(Event event) {
       if (messageBox.isVisible()){
@@ -79,12 +87,37 @@ private boolean onProgramExit(Event event) {
       bubblesClick(Id.BTN_EXIT);
       return true;
 }
+private void restartSleeping(Event event) {
+      scoreTable.hide();
+      menu.hide();
+      if (messageBox.isForced()) {
+	    messageBox.show(stage);
+      }
+      onResumeButtonClicked(event);
+}
+private boolean onStatisticsTableClicked(Event event) {
+      if (scoreTable.isVisible()) {
+	    restartSleeping(event);
+      } else {
+	    if (!menu.isVisible()) {
+		  scoreTable.show(stage);
+		  bubblesClick(Id.BTN_GAME_PAUSE);
+	    }
+	    if (messageBox.isVisible()) {
+		  messageBox.setState(DisplayObject.DisplayState.Forced);
+		  messageBox.hide();
+	    }
+      }
+      return true;
+}
 private boolean onPauseButtonClicked(Event event) {
       if (menu.isVisible())
-	    onResumeButtonClicked(event);
+	    restartSleeping(event);
       else {
-	    menu.show(stage);
-	    bubblesClick(Id.BTN_GAME_PAUSE);
+	    if (!scoreTable.isVisible()) {
+		  menu.show(stage);
+		  bubblesClick(Id.BTN_GAME_PAUSE);
+	    }
       }
       return true;
 }
@@ -134,6 +167,7 @@ public void render(float delta) {
       bar.draw(batch);
       menu.draw(batch);
       messageBox.draw(batch);
+      scoreTable.draw(batch);
       batch.end();
       stage.act();
       stage.draw();
@@ -147,10 +181,13 @@ public void render(float delta) {
 	    lastEventTime = 0;
 	    var event = new InputEvent();
 	    event.setButton(Input.Keys.ESCAPE);
-	    if (menu.isVisible())
-		  onResumeButtonClicked(event);
-	    else
-		  onPauseButtonClicked(event);
+	    if (menu.isVisible() || scoreTable.isVisible()) {
+		  restartSleeping(event);
+	    } else {
+		  if (!menu.isVisible()) {
+			onPauseButtonClicked(event);
+		  }
+	    }
       }
 }
 

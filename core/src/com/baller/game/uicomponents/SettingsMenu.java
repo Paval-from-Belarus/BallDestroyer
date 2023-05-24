@@ -38,7 +38,7 @@ public SettingsMenu(Skin skin) {
       setPos(Globals.FIELD_WIDTH >> 1, Globals.FIELD_HEIGHT >> 1);
       selectResolution = new SelectBox<>(skin);
       selectHardness = new SelectBox<>(skin);
-      fieldRatioSlider = new Slider(0.1f, 1.0f, 0.1f, false, skin);
+      fieldRatioSlider = new Slider(0.1f, 0.7f, 0.05f, false, skin);
       fortuneSlider = new Slider(0.0f, 1.0f, 0.33f, false, skin);
       btnAccept = new TextButton(BTN_ACCEPT_TEXT, skin);
       btnDiscard = new TextButton(BTN_CANCEL_TEXT, skin);

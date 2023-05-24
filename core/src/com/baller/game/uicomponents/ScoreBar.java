@@ -26,7 +26,7 @@ public final Label playerName;
 //private final Label time;
 private final Label gameName;
 private final Button pause;
-private Integer score;
+private final Button statistics;
 private final Skin skin;
 private Texture background;
 
@@ -46,8 +46,10 @@ public ScoreBar(Skin skin) {
       gameName = new Label("Game Destroyer", skin);
       setLabels();
       this.pause = new TextButton("PAUSE", skin);//, BUTTON_STYLE);
-      setPauseButton();
+      this.statistics = new TextButton("Statistics", skin);
+      setButtons();
 }
+
 
 
 private void setLabels() {
@@ -68,21 +70,25 @@ private void setLabels() {
       }
 }
 
-private final static int BUTTON_WIDTH = 50;
+private final static int BUTTON_WIDTH = 100;
 private final static int BUTTON_HEIGHT = 50;
 
-private void setPauseButton() {
-      final int xOffset = getPos().x + getWidth() / 2 - getWidth() / 5;
+private void setButtons() {
+      int xOffset = 5 * getWidth() / 8;
       final int yOffset = getPos().y - BUTTON_HEIGHT / 2;
-      pause.setSize(
-	  Globals.convertWidth(BUTTON_WIDTH),
-	  Globals.convertHeight(BUTTON_HEIGHT)
-      );
-      pause.setPosition(
-	  Globals.convertWidth(xOffset),
-	  Globals.convertHeight(yOffset)
-      );
-      addActor(pause);
+      var buttons = List.of(pause, statistics);
+      for (var button : buttons) {
+	    button.setSize(
+		Globals.convertWidth(BUTTON_WIDTH),
+		Globals.convertHeight(BUTTON_HEIGHT)
+	    );
+	    button.setPosition(
+		Globals.convertWidth(xOffset),
+		Globals.convertHeight(yOffset)
+	    );
+	    xOffset += BUTTON_WIDTH;
+	    addActor(button);
+      }
 }
 
 public void addPauseListener(EventListener listener) {
@@ -93,7 +99,14 @@ public void addPauseListener(EventListener listener) {
 	    }
       });
 }
-
+public void addStatisticsListener(EventListener listener) {
+      statistics.addListener(new ClickListener() {
+	    @Override
+	    public void clicked(InputEvent event, float x, float y) {
+		  listener.handle(event);
+	    }
+      });
+}
 /**
  * rocks accept any value that will used to show current score. Current score will in form of Integer
  */

@@ -31,16 +31,8 @@ public void rotate(float angle) {
       velocity.rotateRad(angle);
 }
 
-public void setVelocity(VelocityLevel level) {
-      float updPlain = 0f;
-      switch (level) {
-	    case Low -> updPlain = arrVelocity[0];
-	    case Medium -> updPlain = arrVelocity[1];
-	    case High -> updPlain = arrVelocity[2];
-      }
-      float diff = this.velocityPlain / updPlain;
-      this.velocityPlain = updPlain;
-      this.velocity.scl(diff);
+public void setVelocity(Vector2 velocity) {
+      this.velocity.set(velocity);
 }
 public Vector2 getVelocity(){
       return velocity;
@@ -60,6 +52,7 @@ public void setPos(int x, int y){
 public void update(float dt) {
       Vector2 diff = velocity.cpy();
       pos = pos.add(diff.scl(dt));
+
       spriteBack.setPosition(pos.x, pos.y);
       virtualPos.move(Globals.convertWidth(pos.x + spriteBack.getWidth() / 2f), Globals.convertHeight(pos.y + spriteBack.getHeight() / 2f));
 }
