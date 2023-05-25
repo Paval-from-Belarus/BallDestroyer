@@ -102,7 +102,7 @@ Ball(Texture texture) {
       setSize(Globals.BALL_SIZE, Globals.BALL_SIZE);
       this.pos = Globals.DEFAULT_BALL_POS.cpy();
       this.velocity = Globals.DEFAULT_BALL_VELOCITY.cpy();
-      this.setCollider(new SquareCollider(1.05f * width, 1.05f * height, virtualPos));
+      this.setCollider(new SquareCollider(1.1f * width, 1.1f * height, virtualPos));
 //      this.setCollider(new CircleCollider(Math.max(width >> 1, height >> 1), virtualPos));
       update(0f);
 }

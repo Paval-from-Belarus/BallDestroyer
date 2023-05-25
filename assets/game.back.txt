@@ -1,6 +1,6 @@
 #Field's properties
-Ratio=0.300
-Blocks=[Plain, DamageBonus, Plain, Plain, DamageBonus, Plain, Killer, Plain, Killer, Killer, Plain, Plain]
+Ratio=0.700
+Blocks=[Plain, MultiBall, Plain, Invincible, Killer, MultiTrampoline, DamageBonus, Invincible, Plain, MultiBall, Killer, Invincible, Destroyed, Destroyed, Destroyed, Plain, Killer, Invincible, Destroyed, Destroyed, Destroyed, Killer, DamageBonus, Plain, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Destroyed, Invincible, Destroyed, Invincible, Killer, Killer, Killer]
 
 #Players' properties
 ##Name mapping
@@ -11,19 +11,19 @@ Ignat=>2
 ##Players' configuration
 ###Player
 Id=0
-Score=0
-TrampolineCnt=1
-Balls=[{Pos=(x=206,y=250),Velocity=(-80.0,140.0),Radius=27.500}]
+Score=9
+TrampolineCnt=2
+Balls=[{Pos=(x=233,y=228),Velocity=(80.0,-140.0),Radius=20.000}]
 ###Player
 Id=1
 Score=0
 TrampolineCnt=1
-Balls=[{Pos=(x=287,y=107),Velocity=(-80.0,140.0),Radius=27.500}]
+Balls=[{Pos=(x=280,y=100),Velocity=(-80.0,140.0),Radius=20.000}]
 ###Player
 Id=2
 Score=0
 TrampolineCnt=1
-Balls=[{Pos=(x=287,y=107),Velocity=(-80.0,140.0),Radius=27.500}]
+Balls=[{Pos=(x=280,y=100),Velocity=(-80.0,140.0),Radius=20.000}]
 
 #Settings
 Resolution=Tiny

@@ -20,7 +20,7 @@ public enum Type {
       private static final int SUM_WEIGHT;
       static {
             Plain.weight = 7;
-            Invincible.weight = 3;
+            Invincible.weight = 5;
             DamageBonus.weight = 3;
             Killer.weight = 4;
             MultiBall.weight = 2;

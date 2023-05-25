@@ -116,12 +116,8 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 		  List<BrickCollision> collisions = (List<BrickCollision>) msg.getValue();
 		  collisions.forEach(collision -> {
 			var brick = collision.brick();
-			if (collision.type() != SquareCollider.SideType.None) {
-			      AnimatedObject.Axis axis = (collision.type() == SquareCollider.SideType.Left || collision.type() == SquareCollider.SideType.Right) ?
-							     AnimatedObject.Axis.Vertical : AnimatedObject.Axis.Horizontal;
-			      player.reflect(axis);
-			}
-			if (brick.isVisible() && brick.getType() != BrickBlock.Type.Invincible) {
+			player.reflect(collision.direction());
+			if (brick.isDestroyable()) {
 			      brick.setType(BrickBlock.Type.Destroyed);
 			}
 		  });
@@ -376,7 +372,7 @@ private List<Message> collectBonuses(Ball ball) {
 public List<Message> getMessage(Ball ball) {
       List<Message> messages = new ArrayList<>(collectBonuses(ball));
       Message msg = new Message(Event.Movement);
-      if (restBlockCnt == 0) {
+      if (restBlockCnt <= 0) {
 	    msg.setEvent(Event.EmptyField);
       }
       if (isOutside(ball)) {
@@ -467,6 +463,9 @@ private void alignTrampolines(List<Trampoline> trampolines, final int height) {
 }
 
 private void onBlockStateChanged(BrickBlock block, BrickBlock.Type type) {
+      if (block.getType() == BrickBlock.Type.Invincible) {
+	    return;
+      }
       if (block.getType() != BrickBlock.Type.Destroyed && type == BrickBlock.Type.Destroyed)
 	    restBlockCnt -= 1;
       if (block.getType() == BrickBlock.Type.Destroyed && type != BrickBlock.Type.Destroyed)
@@ -610,14 +609,15 @@ private boolean isDestroyer(Ball player) {
       Collider body = player.collider();
 //      if (body.center().y + < RED_ZONE)
 //	    return false;
-      boolean isDestroyer = false;
+      System.out.println(restBlockCnt);
+      boolean isDestroyer;
       int index;
       List<BrickCollision> bricks = new ArrayList<>();
-      for (index = 0; !isDestroyer && index < blockList.size(); index++) {
+      for (index = 0; index < blockList.size(); index++) {
 	    var brick = blockList.get(index);
 	    isDestroyer = brick.isVisible() && brick.collider().collides(body);
 	    if (isDestroyer) {
-		  bricks.add(new BrickCollision(brick, ((SquareCollider) brick.collider()).getCollisionSide()));
+		  bricks.add(new BrickCollision(brick, ((SquareCollider) brick.collider()).getAttackVector(body)));
 //		  var collision = new BonusCollision(brick, ((SquareCollider)body).getCollisionSide());
 //		  System.out.println(brick.getType());
 		  raiseBonus(brick, player);
@@ -685,7 +685,7 @@ private void raiseBonus(@NotNull BrickBlock brick, @NotNull Ball ball) {
 	    FlyerBonus bonus = new FlyerBonus(textures.getFlyerBonus(brick.getType()), brick.getType(), score, callback);
 	    assert bonuses != null;
 	    var point = brick.getPos();
-	    bonus.setPos(point.x, point.y);
+	    bonus.setPos(point.x - 40, point.y - 25);
 	    bonuses.add(bonus);
       }
 }

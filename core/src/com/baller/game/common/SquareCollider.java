@@ -2,39 +2,18 @@ package com.baller.game.common;
 
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.baller.game.Globals;
 
 import java.awt.*;
-import java.util.List;
 import java.util.Optional;
 
 public class SquareCollider implements Collider {
-/**
- * This enum is used to check the result of collision of side
- */
-public enum SideType {
-      Top, Right, Bottom, Left, None;
-      private SideType opposite;
 
-      static {
-	    None.opposite = None;
-	    Top.opposite = Bottom;
-	    Bottom.opposite = Top;
-	    Right.opposite = Left;
-	    Left.opposite = Right;
-      }
-
-      private SideType opposite() {
-	    return opposite;
-      }
-}
 
 private final float width;
 private final float height;
 private Point center;
 private float a1, b1;
 private float a2, b2;
-private SideType lastSide;
 
 private SquareCollider(float width, float height) {
       this.width = width;
@@ -46,13 +25,6 @@ private SquareCollider(float width, float height) {
 public SquareCollider(float width, float height, Point center) {
       this(width, height);
       move(center);
-}
-
-public SideType getCollisionSide() {
-      SideType side = SideType.None;
-      if (lastSide != null)
-	    side = lastSide;
-      return side;
 }
 
 private Vector2 upperBound() {
@@ -81,46 +53,62 @@ public boolean collides(Collider collider) {
 	    lowerBound.x = Math.max(bound1.x, bound2.x);
 	    isCollides = upperBound.y - lowerBound.y <= other.height() + this.height() &&
 			     lowerBound.x - upperBound.x <= other.width() + this.width();
-	    if (isCollides) {
-		  lastSide = getSideType(other);
-		  other.lastSide = lastSide.opposite();
-	    }
       }
       return isCollides;
 }
 
 
 /**
- * this method is only used to set side of collision by external object
- *
- * @param point is supposed to be inside
+ * Return the angle by which collider attack the square
  */
-private SideType getSideType(Collider other) {
-      var center = other.center();
-      Vector2[] vertexes = new Vector2[] {
-	  upperBound(), upperBound().add(width(), 0.0f),
-	 lowerBound(), lowerBound().add(-width(), 0.0f)
-      };
-      Vector2 closest = vertexes[3]; //default
-      float dest = Float.POSITIVE_INFINITY;
-      for (int i = 0; i < vertexes.length; i++) {
-	    float remoted = vertexes[i].dst(center.x ,center.y);
-	    if (remoted < dest) {
-		  closest = vertexes[i];
-		  dest = remoted;
+public Vector2 getAttackVector(Collider other) {
+      Vector2 center = new Vector2(center().x, center().y);
+      Vector2 point = new Vector2(other.center().x, other.center().y);
+      Vector2 direction = point.sub(center);
+      Vector2 result = new Vector2();
+      if (Math.abs(direction.x) > Math.abs(direction.y)) {
+	    if (direction.x > 0) {
+		  result.x = 1.0f;
+	    } else {
+		  result.x = -1.0f;
+	    }
+      } else {
+	    if (direction.y > 0) {
+		  result.y = 1.0f;
+	    } else {
+		  result.y = -1.0f;
 	    }
       }
+      return result;
+//	    return direction.scl(-1.0f).scl(1.0f / direction.len());
+//      final Vector2[] vertexes = new Vector2[] {
+//	  upperBound(), upperBound().add(width(), 0.0f),
+//	 lowerBound(), lowerBound().add(-width(), 0.0f)
+//      };
+//      Vector2 closest = vertexes[3]; //default
+//      float dest = Float.POSITIVE_INFINITY;
+//      for (int i = 0; i < vertexes.length; i++) {
+//	    float remoted = vertexes[i].dst(center.x ,center.y);
+//	    if (remoted < dest) {
+//		  closest = vertexes[i];
+//		  dest = remoted;
+//	    }
+//      }
 
-      final float diffX = other.center().x - center().x;
-      final float diffY = other.center().y - center().y;
-      float tan = diffY / diffX;
-      float angle = MathUtils.atan(tan);
-      if (diffX < 0) {
-	    angle += MathUtils.PI;
-      }
-      if (diffY < 0.3) {
-	    angle = 0.1f;
-      }
+      //      Vector2 direction = closest.cpy().sub(center.x, center.y);
+//      return center.cpy().sub(closest.x, closest.y);
+
+
+//      final float diffX = other.center().x - center().x;
+//      final float diffY = other.center().y - center().y;
+//      float tan = diffY / diffX;
+//      float angle = MathUtils.atan(tan);
+//      if (diffX < 0) {
+//	    angle += MathUtils.PI;
+//      }
+//      if (diffY < 0.3) {
+//	    angle = 0.1f;
+//      }
 //      if (Math.abs(diffY) < 0.3) {
 //	    angle = 0.1f;
 ////	    if (diffY > 0) {
@@ -129,10 +117,10 @@ private SideType getSideType(Collider other) {
 ////		  angle = Math.min(angle, -0.2f);
 ////	    }
 //      }
-      int quarter = MathUtils.floor((angle + MathUtils.HALF_PI) / MathUtils.HALF_PI); //from -1 to
-//      quarter = quarter % 4;
-      final SideType[] sides = {SideType.Bottom, SideType.Right, SideType.Top, SideType.Top};
-      return sides[quarter];
+//      int quarter = MathUtils.floor((angle + MathUtils.HALF_PI) / MathUtils.HALF_PI); //from -1 to
+////      quarter = quarter % 4;
+//      final SideType[] sides = {SideType.Bottom, SideType.Right, SideType.Top, SideType.Top};
+//      return sides[quarter];
 //      float xOffset = center.x - point.x;
 //      float yOffset = center.y - point.y;
 //      float xRatio = xOffset / width();

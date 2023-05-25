@@ -13,9 +13,9 @@ public class Globals {
     public static int CURR_MODE_INDEX = 0;
     public static String PLAYER_NAME = "John";
     public static float CURR_LUCKY_LEVEL = 0.5f;
-    public static Vector2 DEFAULT_BALL_POS = new Vector2(260, 80f);
+    public static Vector2 DEFAULT_BALL_POS = new Vector2(280, 80f);
     public static Vector2 DEFAULT_BALL_VELOCITY = new Vector2(-80f, 140f);
-    public static int BALL_SIZE = 55;
+    public static int BALL_SIZE = 40;
     public static Vector2 DEFAULT_TRAMPOLINE_VELOCITY = new Vector2(50f, 0f);
     public static Vector2 DEFAULT_TRAMPOLINE_POS= new Vector2(100f, 40f);
     public static int TRAMPOLINE_WIDTH = 120;
