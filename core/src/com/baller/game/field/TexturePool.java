@@ -27,16 +27,20 @@ private void initBlocks(){
 	      case Killer -> path = "horseshoe.png";
 	      case MultiTrampoline -> path = "bottle.png";
 	      case MultiBall -> path = "voody.png";
+	      case Invincible -> path = "barrier.png";
 	      default -> path = "block.png";
 	}
 	textBonuses.put(type, new Texture(path));
       }
 }
-public Texture getBlock() {
-      return textBlock;
-}
 public Texture getFlyerBonus(BrickBlock.Type type) {
       return textBonuses.get(type);
+}
+public Texture getBrick(BrickBlock.Type type) {
+      return switch (type) {
+	    case Invincible, Plain -> textBonuses.get(type);
+	    default -> textBlock;
+      };
 }
 public Texture getTrampoline(){
 	return textTrampoline;

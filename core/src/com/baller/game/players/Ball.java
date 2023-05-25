@@ -17,6 +17,8 @@ import java.util.regex.Pattern;
 
 
 public class Ball extends AnimatedObject {
+public static Vector2 DEFAULT_BALL_POS = new Vector2(280, 80f);
+public static int BALL_SIZE = 40;
 public static class Properties extends AbstractSerializable<Ball> {
       private Point pos;
       private Vector2 velocity;
@@ -99,8 +101,8 @@ private boolean isFrozen = false;
 
 Ball(Texture texture) {
       super(texture);
-      setSize(Globals.BALL_SIZE, Globals.BALL_SIZE);
-      this.pos = Globals.DEFAULT_BALL_POS.cpy();
+      setSize(BALL_SIZE, BALL_SIZE);
+      this.pos = DEFAULT_BALL_POS.cpy();
       this.velocity = Globals.DEFAULT_BALL_VELOCITY.cpy();
       this.setCollider(new SquareCollider(1.1f * width, 1.1f * height, virtualPos));
 //      this.setCollider(new CircleCollider(Math.max(width >> 1, height >> 1), virtualPos));

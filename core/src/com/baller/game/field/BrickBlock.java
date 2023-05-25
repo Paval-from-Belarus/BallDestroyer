@@ -34,8 +34,8 @@ public enum Type {
             return SUM_WEIGHT;
       }
 }
-public static int DEFAULT_WIDTH = 100;
-public static int DEFAULT_HEIGHT = 50;
+public static int DEFAULT_WIDTH = 85;
+public static int DEFAULT_HEIGHT = 30;
 private Type type;
 private BiConsumer<BrickBlock, Type> task;
 private BrickBlock(Texture texture) {

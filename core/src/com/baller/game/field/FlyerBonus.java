@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 public class FlyerBonus extends AnimatedObject {
-private static final int DEFAULT_WIDTH = 80;
-private static final int DEFAULT_HEIGHT = 40;
+private static final int DEFAULT_WIDTH = 60;
+private static final int DEFAULT_HEIGHT = 30;
 private BrickBlock.Type type;
 private Label scoreBonus;
 private int score;

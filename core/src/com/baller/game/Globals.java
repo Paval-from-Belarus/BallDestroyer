@@ -9,13 +9,12 @@ public class Globals {
     public static Skin GAME_SKIN;
     public enum Color {Red, Blue, Green}
     public static String[] SCREEN_RESOLUTIONS = {"Minimal", "Broad", "Full Screen"};
+    public static String[] MODE_LABELS = {"Noobie", "Veteran", "Master", "Crazy", "Mad"};
     public static int CURR_SCREEN_INDEX = 0;
     public static int CURR_MODE_INDEX = 0;
     public static String PLAYER_NAME = "John";
     public static float CURR_LUCKY_LEVEL = 0.5f;
-    public static Vector2 DEFAULT_BALL_POS = new Vector2(280, 80f);
     public static Vector2 DEFAULT_BALL_VELOCITY = new Vector2(-80f, 140f);
-    public static int BALL_SIZE = 40;
     public static Vector2 DEFAULT_TRAMPOLINE_VELOCITY = new Vector2(50f, 0f);
     public static Vector2 DEFAULT_TRAMPOLINE_POS= new Vector2(100f, 40f);
     public static int TRAMPOLINE_WIDTH = 120;
@@ -27,7 +26,9 @@ public class Globals {
     public static int FIELD_WIDTH = 640;
     public static int FIELD_HEIGHT = 480;
     public static float FIELD_RATIO = 0.3f; //what is the part of whole window field holds
-    public static int TABLE_WIDTH = FIELD_WIDTH;
+    public static final float TABLE_FLANK_RATIO = 0.15f;
+    public static final float TABLE_FRONT_RATIO = 0.15f;
+    public static int TABLE_WIDTH = (int) (FIELD_WIDTH * (1.0f - TABLE_FLANK_RATIO * 2.0f));
     public static int TABLE_HEIGHT = (int) (FIELD_HEIGHT * FIELD_RATIO);
     public static int RED_ZONE = FIELD_HEIGHT - TABLE_HEIGHT;
     public static float WINDOW_WIDTH = Gdx.graphics.getWidth();

@@ -66,7 +66,7 @@ public Vector2 getAttackVector(Collider other) {
       Vector2 point = new Vector2(other.center().x, other.center().y);
       Vector2 direction = point.sub(center);
       Vector2 result = new Vector2();
-      if (Math.abs(direction.x) > Math.abs(direction.y)) {
+      if (Math.abs(direction.x / width() * height()) > Math.abs(direction.y)) {
 	    if (direction.x > 0) {
 		  result.x = 1.0f;
 	    } else {
@@ -80,61 +80,6 @@ public Vector2 getAttackVector(Collider other) {
 	    }
       }
       return result;
-//	    return direction.scl(-1.0f).scl(1.0f / direction.len());
-//      final Vector2[] vertexes = new Vector2[] {
-//	  upperBound(), upperBound().add(width(), 0.0f),
-//	 lowerBound(), lowerBound().add(-width(), 0.0f)
-//      };
-//      Vector2 closest = vertexes[3]; //default
-//      float dest = Float.POSITIVE_INFINITY;
-//      for (int i = 0; i < vertexes.length; i++) {
-//	    float remoted = vertexes[i].dst(center.x ,center.y);
-//	    if (remoted < dest) {
-//		  closest = vertexes[i];
-//		  dest = remoted;
-//	    }
-//      }
-
-      //      Vector2 direction = closest.cpy().sub(center.x, center.y);
-//      return center.cpy().sub(closest.x, closest.y);
-
-
-//      final float diffX = other.center().x - center().x;
-//      final float diffY = other.center().y - center().y;
-//      float tan = diffY / diffX;
-//      float angle = MathUtils.atan(tan);
-//      if (diffX < 0) {
-//	    angle += MathUtils.PI;
-//      }
-//      if (diffY < 0.3) {
-//	    angle = 0.1f;
-//      }
-//      if (Math.abs(diffY) < 0.3) {
-//	    angle = 0.1f;
-////	    if (diffY > 0) {
-////		  angle = Math.max(angle, 0.2f);
-////	    } else {
-////		  angle = Math.min(angle, -0.2f);
-////	    }
-//      }
-//      int quarter = MathUtils.floor((angle + MathUtils.HALF_PI) / MathUtils.HALF_PI); //from -1 to
-////      quarter = quarter % 4;
-//      final SideType[] sides = {SideType.Bottom, SideType.Right, SideType.Top, SideType.Top};
-//      return sides[quarter];
-//      float xOffset = center.x - point.x;
-//      float yOffset = center.y - point.y;
-//      float xRatio = xOffset / width();
-//      float yRatio = yOffset / height();
-//      SideType[] sides;
-//      int index;
-//      if (Math.abs(xRatio) < Math.abs(yRatio)) {
-//	    sides = new SideType[]{SideType.Left, SideType.Right};
-//	    index = xRatio > 0 ? 1 : 0;
-//      } else {
-//	    sides = new SideType[]{SideType.Bottom, SideType.Top};
-//	    index = yRatio > 0 ? 1 : 0;
-//      }
-//      return sides[index];
 }
 
 private float height() {

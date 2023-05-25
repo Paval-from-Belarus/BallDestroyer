@@ -172,8 +172,8 @@ public static BrickBlock.Type[] getRandomBricks(int brickCnt) {
 private int restBlockCnt;//it's used to calculate the rest of block on the field
 private int columnCnt;
 private int rowCnt;
-private int rowGap;
 private int columnGap;
+private int rowGap;
 private Object lastHandle;
 private int ceilWidth;
 private int ceilHeight;
@@ -475,23 +475,30 @@ private void onBlockStateChanged(BrickBlock block, BrickBlock.Type type) {
 private BrickBlock nextBlock(int index) {
       int realIndex = index % blockTypes.length;
       BrickBlock.Type type = blockTypes[realIndex];
-      BrickBlock block = new BrickBlock(textures.getBlock(), type);
+      BrickBlock block = new BrickBlock(textures.getBrick(type), type);
       block.onStateChanged(this::onBlockStateChanged);
       return block;
 }
 
 public void rebuild() {
-      updateParams();
+      this.columnCnt = TABLE_WIDTH / BrickBlock.DEFAULT_WIDTH;
+      this.rowCnt = (TABLE_HEIGHT / BrickBlock.DEFAULT_HEIGHT);
+      this.columnGap = (TABLE_WIDTH % BrickBlock.DEFAULT_WIDTH) / (this.columnCnt - 1);
+      this.rowGap = (TABLE_HEIGHT % BrickBlock.DEFAULT_HEIGHT) / this.rowCnt;
+      this.ceilHeight = BrickBlock.DEFAULT_HEIGHT + (this.rowGap);
+      this.ceilWidth = BrickBlock.DEFAULT_WIDTH + (this.columnGap);
+      final int borderGap = TABLE_WIDTH % ceilWidth / 2;
+      if (this.blockTypes == null) //default initializer
+	    this.blockTypes = getRandomBricks(rowCnt * columnCnt);
       if (blockList != null)
 	    blockList.clear();
       else
 	    blockList = new ArrayList<>(rowCnt * columnCnt);
       this.restBlockCnt = 0;
       int brickIndex = 0;
-//      int START_OFFSET_X = (FIELD_WIDTH - TABLE_WIDTH) / 2 + (BrickBlock.DEFAULT_WIDTH >> 1);
-      int START_OFFSET_X = (columnGap >> 1) + (BrickBlock.DEFAULT_WIDTH >> 1);
-      int START_OFFSET_Y = FIELD_HEIGHT - ((rowGap >> 1) + (BrickBlock.DEFAULT_HEIGHT >> 1));
-      Point currPos = new Point(START_OFFSET_X, START_OFFSET_Y);
+      final int START_X = (int) (TABLE_FLANK_RATIO * FIELD_WIDTH) + borderGap;
+      final int START_Y = (int) ((1.0f - TABLE_FRONT_RATIO) * FIELD_HEIGHT);
+      Point currPos = new Point(START_X, START_Y);
       for (int i = 0; i < rowCnt; i++) {
 	    for (int j = 0; j < columnCnt; j++) {
 		  BrickBlock block = nextBlock(brickIndex);
@@ -502,7 +509,7 @@ public void rebuild() {
 		  currPos.translate(this.ceilWidth, 0);
 		  brickIndex += 1;
 	    }
-	    currPos.x = START_OFFSET_X;
+	    currPos.x = START_X;
 	    currPos.translate(0, -this.ceilHeight);
       }
       initAllTrampolines();
@@ -562,14 +569,7 @@ public void dispose() {
 }
 
 private void updateParams() {
-      this.columnCnt = TABLE_WIDTH / BrickBlock.DEFAULT_WIDTH;
-      this.rowGap = (TABLE_WIDTH % BrickBlock.DEFAULT_WIDTH) / this.columnCnt;
-      this.rowCnt = (TABLE_HEIGHT / BrickBlock.DEFAULT_HEIGHT);
-      this.columnGap = (TABLE_HEIGHT % BrickBlock.DEFAULT_HEIGHT) / this.rowCnt;
-      this.ceilHeight = BrickBlock.DEFAULT_HEIGHT + (this.columnGap);
-      this.ceilWidth = BrickBlock.DEFAULT_WIDTH + (this.rowGap);
-      if (this.blockTypes == null) //default initializer
-	    this.blockTypes = getRandomBricks(rowCnt * columnCnt);
+
 }
 
 private boolean isJumper(Ball player) {
