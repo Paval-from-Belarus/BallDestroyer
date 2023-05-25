@@ -6,7 +6,7 @@ import com.baller.game.common.SquareCollider;
 
 public class Trampoline extends AnimatedObject {
 public static final int DEFAULT_WIDTH = 120;
-public static final int DEFAULT_HEIGHT = 30;
+public static final int DEFAULT_HEIGHT = 10;
 Trampoline(Texture texture) {
       super(texture);
       setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);

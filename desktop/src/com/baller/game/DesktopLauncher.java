@@ -12,7 +12,7 @@ public class DesktopLauncher {
 	      config.setTitle("ball-destroyer");
 	      config.setResizable(false);
 	      config.setDecorated(true);
-	      config.setWindowSizeLimits(640, 480, 1024, 768);
+	      config.setWindowSizeLimits(640, 480, 1280, 962);
 	      new Lwjgl3Application(new Game(), config);
 
 	}

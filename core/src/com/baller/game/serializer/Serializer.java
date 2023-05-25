@@ -34,8 +34,9 @@ public List<Pair<String, Integer>> getStatistics() {
       return statistics;
 }
 
-public void setStatistics(List<Pair<String, Integer>> statistics) {
+public Serializer setStatistics(List<Pair<String, Integer>> statistics) {
       this.statistics = statistics;
+      return this;
 }
 
 public enum SerializationMode {Json, Text}
@@ -45,8 +46,8 @@ public GameField.Properties field;
 public Player.Properties[] players;
 public Map<Integer, String> nameMapper;
 public Settings.Properties settings;
+public Long elapsedTime;
 public transient String configPath;
-
 private transient GameField gameField;
 private transient Players rawPlayers;
 private transient Settings rawSettings;
@@ -96,11 +97,17 @@ public Serializer setGameField(GameField field) {
       this.gameField = field;
       return this;
 }
-
+public Serializer setElapsedTime(Long time) {
+      this.elapsedTime = time;
+      return this;
+}
 public Serializer setSettings(Settings settings) {
       this.settings = settings.serializer();
       this.rawSettings = settings;
       return this;
+}
+public Long getElapsedTime() {
+      return elapsedTime;
 }
 
 public Serializer() {}

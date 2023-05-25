@@ -85,6 +85,9 @@ private String serializeStatistics(List<Pair<String, Integer>> statistics) {
       }
       return strText.toString();
 }
+private String serializeElapsedTime(Long time) {
+      return "#Elapsed time:(" + time + ")\n";
+}
 public String toText(Serializer source) {
       StringBuilder builder = new StringBuilder();
       try {
@@ -92,7 +95,8 @@ public String toText(Serializer source) {
 		.append(serializeField(source.field))
 		.append(serializePlayers(source.players, source.nameMapper))
 		.append(serializeSettings(source.settings))
-		.append(serializeStatistics(source.statistics));
+		.append(serializeStatistics(source.statistics))
+		.append(serializeElapsedTime(source.elapsedTime));
       } catch (NoSuchFieldException | IllegalAccessException e) {
 	    throw new RuntimeException(e);
       }
@@ -166,7 +170,19 @@ private Optional<Map<Integer, String>> getNameMapper(String source) {
 	    return Optional.empty();
       return Optional.of(nameMapper);
 }
-
+private Optional<Long> getElapsedTimme(String source) {
+      Pattern pattern = Pattern.compile("#Elapsed Time:\\([0-9]+\\)");
+      Matcher matcher = pattern.matcher(source);
+      Optional<Long> result = Optional.empty();
+      if (matcher.find() && matcher.groupCount() == 1) {
+	    try {
+		  Long time = Long.parseLong(matcher.group(1));
+		  result = Optional.of(time);
+	    } catch (NumberFormatException ignored) {
+	    }
+      }
+      return result;
+}
 private Optional<Player.Properties[]> getPlayers(String source) throws ReflectiveOperationException {
 	String[] items = source.split("##Players' configuration");
 	if(items.length < 2)
@@ -222,7 +238,8 @@ public @Nullable Serializer fromText(String content) throws ReflectiveOperationE
       var players = getPlayers(content);
       var settings = getSettings(content);
       var statistics = getStatistics(content);
-      if (statistics.isEmpty())
+      var time = getElapsedTimme(content);
+      if (statistics.isEmpty() || time.isEmpty())
 	    return  null;
       if(field.isEmpty() || mapper.isEmpty() || players.isEmpty() || settings.isEmpty())
 	    return null;
@@ -231,6 +248,7 @@ public @Nullable Serializer fromText(String content) throws ReflectiveOperationE
       result.players = players.get();
       result.settings = settings.get();
       result.statistics = statistics.get();
+      result.setElapsedTime(time.get());
       return result;
 }
 private String serializeField(GameField.Properties props){

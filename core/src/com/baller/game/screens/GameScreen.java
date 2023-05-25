@@ -49,8 +49,12 @@ public void acceptClicks(Map<Id, UserClick> mapper) {
       var scoreClick = mapper.get(Id.LBL_GAME_SCORE);
       var messageClick = mapper.get(Id.MSG_GAME_PROCESS);
       var tableClick = mapper.get(Id.BTN_STATISTICS);
-      assert scoreClick != null && messageClick != null && tableClick != null;
+      var restClick = mapper.get(Id.REST_COUNTER);
+      var timeClick = mapper.get(Id.GAME_TIMER);
+      assert scoreClick != null && messageClick != null && tableClick != null && restClick != null && timeClick != null;
       bar.onScoreChanged(scoreClick.rocks());
+      bar.onRestChanged(restClick.rocks());
+      bar.onTimeChanged(timeClick.rocks());
       scoreTable.onStatisticsChanged(tableClick.rocks());
       messageBox.onMessageInfo(messageClick.rocks());
 }

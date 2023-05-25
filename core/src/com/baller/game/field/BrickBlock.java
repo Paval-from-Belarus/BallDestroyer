@@ -17,18 +17,27 @@ public class BrickBlock extends AnimatedObject {
 public enum Type {
       Plain, Invincible, DamageBonus, Killer, MultiTrampoline, MultiBall, Destroyed;
       private int weight;
-      private static final int SUM_WEIGHT;
+      private static int SUM_WEIGHT;
+      public static float ratio;
       static {
             Plain.weight = 7;
             Invincible.weight = 5;
             DamageBonus.weight = 3;
             Killer.weight = 4;
-            MultiBall.weight = 2;
+            MultiBall.weight = 5;//2;
             MultiTrampoline.weight = 2;
             SUM_WEIGHT = Arrays.stream(values()).map(v -> v.weight).reduce(0, Integer::sum);
       }
+      public static void setRatio(float ratio) {
+            Type.ratio = ratio;
+            SUM_WEIGHT = Arrays.stream(values()).map(Type::weight).reduce(0, Integer::sum);
+      }
       public int weight() {
-            return weight;
+            int result = weight;
+            if (this != Plain && this != Destroyed) {
+                  result = (int) (result * ratio);
+            }
+            return result;
       }
       public static int totalWeight() {
             return SUM_WEIGHT;

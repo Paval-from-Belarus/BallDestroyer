@@ -40,6 +40,12 @@ public void setViewport(Viewport port) {
 public void setScore(Integer score) {
       ui.setComponent(UserClick.Id.LBL_GAME_SCORE, score);
 }
+public void setBrickCounter(Integer rest) {
+      ui.setComponent(UserClick.Id.REST_COUNTER, rest);
+}
+public void setElapsedTime(Long time) {
+      ui.setComponent(UserClick.Id.GAME_TIMER, time);
+}
 public void setScoreTable(List<Pair<String, Integer>> statistics) {
       ui.setComponent(UserClick.Id.BTN_STATISTICS, statistics);
 }

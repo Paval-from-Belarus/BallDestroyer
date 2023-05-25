@@ -49,12 +49,15 @@ private List<Pair<String, Integer>> statistics;
 public enum SavedMode {User, Internal}
 
 public enum HardnessLevel {
-      Easy, Hard, Mad;
+      Noobie, Veteran, Master, Crazy, Mad;
       private float ratio = 1.0f;
 
       static {
-	    Hard.ratio = 2.0f;
-	    Mad.ratio = 3.0f;
+	    Noobie.ratio = 0.7f;
+	    Veteran.ratio = 1.3f;
+	    Master.ratio = 2.0f;
+	    Crazy.ratio = 3.0f;
+	    Mad.ratio = 4.0f;
       }
 
       public float ratio() {
@@ -63,13 +66,15 @@ public enum HardnessLevel {
 }
 
 public enum ResolutionMode {
-      Tiny, Broad, Full;
+      Tiny, Small, Broad, Large, Full;
       private Point mode;
 
       static {
 	    Tiny.mode = new Point(640, 480);
+	    Small.mode = new Point(851, 640);
 	    Broad.mode = new Point(1024, 768);
-	    Full.mode = Broad.mode;
+	    Large.mode = new Point(1280, 962);
+	    Full.mode = Large.mode; //prevent memory leaks
       }
 
       public int width() {
@@ -91,6 +96,7 @@ private Consumer<Float> renderHandler;
 private AtomicBoolean isActive;
 private AtomicBoolean isFieldCreated;
 private AtomicBoolean isGameFinished;
+private Long elapsedTime;
 private Player.Id currentPlayer;
 
 {
@@ -98,6 +104,7 @@ private Player.Id currentPlayer;
       isActive = new AtomicBoolean(true);
       isGameFinished = new AtomicBoolean(false);
       renderHandler = this::defaultRenderHandler;
+      elapsedTime = 0L;
 }
 
 @Override
@@ -111,8 +118,9 @@ public void create() {
 
 private void initSettings() {
       settings = new Settings(ResolutionMode.Tiny);
-      settings.setHardness(HardnessLevel.Easy);
+      settings.setHardness(HardnessLevel.Noobie);
       settings.setLuckyLevel(Globals.CURR_LUCKY_LEVEL);
+      changeResolution(ResolutionMode.Full);
 }
 
 private void initField(float dt) {
@@ -120,6 +128,7 @@ private void initField(float dt) {
 	    renderHandler = this::dispatchField;
 	    return;
       }
+      elapsedTime = 0L;
       players = new Players();
       var list = new Array<Player.Id>();
       var id = players.add("John");
@@ -178,6 +187,7 @@ private void load(@Nullable Object rawMode) {
       serializer.ifPresentOrElse(s -> {
 	    this.field = s.field.construct();
 	    this.statistics = s.getStatistics();
+	    this.elapsedTime = s.getElapsedTime();
 	    controller.setScoreTable(statistics);
 	    this.field.addPlayers(s.players);
 	    this.players = new Players(s.players, s.nameMapper);
@@ -219,7 +229,8 @@ private void save(Object rawMode) {
 		.setPlayers(players)
 		.setGameField(field)
 		.setSettings(settings)
-		.setStatistics(statistics);
+		.setStatistics(statistics)
+		.setElapsedTime(elapsedTime);
 	    Proxy proxy = new Proxy(serializer);
 	    Runnable task = () -> {
 		  proxy.toFile(filePair.getValue0().toString(), Proxy.SerializationMode.Json);
@@ -407,6 +418,9 @@ private void dispatchField(float dt) {
 	    isGameFinished.set(false);
 	    finishHandler(result);
       }
+      elapsedTime += (long) (dt * 1000); //convert seconds to millis
+      controller.setBrickCounter(field.getRestCounter());
+      controller.setElapsedTime(elapsedTime);
       players.update(dt);
       field.update(dt);
       renderField(dt);

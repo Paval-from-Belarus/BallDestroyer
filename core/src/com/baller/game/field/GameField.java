@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.badlogic.gdx.math.MathUtils;
+import com.baller.game.Globals;
 import com.baller.game.common.AnimatedObject;
 import com.baller.game.common.Collider;
 import com.baller.game.common.DisplayObject;
@@ -29,10 +30,11 @@ public class GameField {
 public static class Properties extends AbstractSerializable<GameField> {
       private float ratio;
       private BrickBlock.Type[] blocks;
+      private FlyerBonus.Properties[] bonuses;
 
       public Properties() {
-	    var patterns = List.of("Ratio=(.+)", "Blocks=\\[(.+)\\]");
-	    List<Consumer<String>> handlers = List.of(this::setRatio, this::setBlocks);
+	    var patterns = List.of("Ratio=(.+)", "Blocks=\\[(.+)\\]", "Bonuses=\\[(.+)\\]");
+	    List<Consumer<String>> handlers = List.of(this::setRatio, this::setBlocks, this::setBonuses);
 	    addPatterns(patterns);
 	    addHandlers(handlers);
 	    setEmptyState(true);
@@ -44,13 +46,15 @@ public static class Properties extends AbstractSerializable<GameField> {
 	    blocks = field.blockList.stream()
 			 .map(BrickBlock::getType)
 			 .toArray(BrickBlock.Type[]::new);
+	    bonuses = field.bonuses.stream().map(FlyerBonus::getProperties).toArray(FlyerBonus.Properties[]::new);
 	    setEmptyState(false);
       }
 
       @Override
       public String serialize() {
 	    return "Ratio=" + String.format("%.3f", ratio) + "\n" +
-		       "Blocks=" + Arrays.toString(blocks) + "\n";
+		       "Blocks=" + Arrays.toString(blocks) + "\n" +
+		       "Bonuses=" + Arrays.toString(Arrays.stream(bonuses).map(FlyerBonus.Properties::serialize).toArray()) + "\n";
       }
 
       @Override
@@ -58,6 +62,8 @@ public static class Properties extends AbstractSerializable<GameField> {
 	    GameField field = new GameField();
 	    field.setRatio(ratio);
 	    field.blockTypes = blocks;
+	    List<FlyerBonus> bonuses = Arrays.stream(this.bonuses).map(skeleton -> skeleton.construct(field.textures.getFlyerBonus(skeleton.type))).toList();
+	    field.bonuses.addAll(bonuses);
 	    return field;
       }
 
@@ -70,6 +76,14 @@ public static class Properties extends AbstractSerializable<GameField> {
 	    this.blocks = Arrays.stream(items)
 			      .map(BrickBlock.Type::valueOf)
 			      .toArray(BrickBlock.Type[]::new);
+      }
+      private void setBonuses(String source) {
+	    String[] items = source.split(", +");
+	    bonuses = Arrays.stream(items).map(raw -> {
+		  var props = new FlyerBonus.Properties();
+		  props.deserialize(raw);
+		  return props;
+	    }).toArray(FlyerBonus.Properties[]::new);
       }
 
       @Override
@@ -132,9 +146,9 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 		  if (side == TopSide && player.getVelocity().y > 0) {
 			player.reflect(AnimatedObject.Axis.Horizontal);
 		  }
-		  if (side == LeftSide || side == RightSide) {
+
+		  if ((side == LeftSide && player.getVelocity().x < 0) || (side == RightSide && player.getVelocity().x > 0)) {
 			player.reflect(AnimatedObject.Axis.Vertical);
-			player.update(0.01f);
 		  }
 	    }
 	    case TrampolineCollision -> {
@@ -149,6 +163,7 @@ public static void DefaultDispatcher(Message msg, Ball player) {
 
 public static BrickBlock.Type[] getRandomBricks(int brickCnt) {
       BrickBlock.Type[] brickTypes = new BrickBlock.Type[brickCnt];
+      BrickBlock.Type.setRatio(CURR_LUCKY_LEVEL);
       final int[] lPivots = new int[BrickBlock.Type.values().length];
       int pivot = 0;
       for (int i = 0; i < BrickBlock.Type.values().length; i++) {
@@ -162,9 +177,6 @@ public static BrickBlock.Type[] getRandomBricks(int brickCnt) {
 		  typeIndex += 1;
 	    }
 	    brickTypes[i] = BrickBlock.Type.values()[typeIndex - 1];
-	    if (brickTypes[i] == BrickBlock.Type.Destroyed) {
-		  System.out.println("Destroyed");
-	    }
       }
       return brickTypes;
 }
@@ -181,17 +193,21 @@ private List<BrickBlock> blockList;
 private BrickBlock.Type[] blockTypes;
 private List<Trampoline> trampolines;
 private List<PlayerTrampolines> playerTrampolines;
-private List<Player.Id> players;
+private final List<Player.Id> players;
 private final List<FlyerBonus> bonuses;
-private List<Message> msgQueue = new ArrayList<>();
-private TexturePool textures;
-private Background background;
+private final TexturePool textures;
+private final Background background;
+private final List<SquareCollider> borders;
 
 private GameField() {
       bonuses = new ArrayList<>();
       players = new ArrayList<>();
       textures = new TexturePool();
       background = new Background(textures.getFieldBGD());
+      borders = List.of(new SquareCollider(10, FIELD_HEIGHT, new Point(5, FIELD_HEIGHT / 2)),
+	  new SquareCollider(FIELD_WIDTH, 10, new Point(FIELD_WIDTH / 2, FIELD_HEIGHT - 5)),
+	  new SquareCollider(10, FIELD_HEIGHT, new Point(FIELD_WIDTH - 5, FIELD_HEIGHT / 2)),
+	  new SquareCollider(FIELD_WIDTH, 10, new Point(FIELD_WIDTH / 2, 5)));
 }
 
 public GameField(Player.Properties[] properties) {
@@ -245,7 +261,9 @@ public boolean remove(@NotNull Player.Id player) {
 }
 
 private final List<FlyerBonus> removedBonuses = new ArrayList<>();
-
+public int getRestCounter() {
+      return restBlockCnt;
+}
 public void update(float dt) {
       boolean isBlocked = false;
       int index;
@@ -355,7 +373,18 @@ private List<Message> collectBonuses(Ball ball) {
 	    for (var bonus : bonuses) {
 		  if (bonus.collider().collides(trampoline.collider())) {
 			var msg = new Message(Event.BonusCollision);
-			Function<Object, Object> callback = bonus.getCallback();
+			Function<Object, Object> callback = switch (bonus.getType()) {
+			      case Killer -> (o) -> getRow((Integer) bonus.getParams());//accept index of brick
+			      case MultiTrampoline -> (Object count) -> {
+				    this.setTrampolineCnt(getCurrentPlayer(), (Integer) count);
+				    initAllTrampolines();
+				    absorbAll();
+				    return null;
+			      };
+			      case DamageBonus, Invincible -> (o) -> null;
+			      case MultiBall -> (o) -> ball;
+			      default -> null;
+			};
 			Integer score = bonus.getScore();
 			var collision = new BonusCollision(bonus.getType(), score, callback);
 			msg.setValue(collision);
@@ -482,7 +511,7 @@ private BrickBlock nextBlock(int index) {
 
 public void rebuild() {
       this.columnCnt = TABLE_WIDTH / BrickBlock.DEFAULT_WIDTH;
-      this.rowCnt = (TABLE_HEIGHT / BrickBlock.DEFAULT_HEIGHT);
+      this.rowCnt = (int) (TABLE_HEIGHT * (1.0f - TABLE_RED_ZONE_RATIO) / BrickBlock.DEFAULT_HEIGHT);
       this.columnGap = (TABLE_WIDTH % BrickBlock.DEFAULT_WIDTH) / (this.columnCnt - 1);
       this.rowGap = (TABLE_HEIGHT % BrickBlock.DEFAULT_HEIGHT) / this.rowCnt;
       this.ceilHeight = BrickBlock.DEFAULT_HEIGHT + (this.rowGap);
@@ -497,7 +526,7 @@ public void rebuild() {
       this.restBlockCnt = 0;
       int brickIndex = 0;
       final int START_X = (int) (TABLE_FLANK_RATIO * FIELD_WIDTH) + borderGap;
-      final int START_Y = (int) ((1.0f - TABLE_FRONT_RATIO) * FIELD_HEIGHT);
+      final int START_Y = (int) ((1.0f - TABLE_FRONT_RATIO - FIELD_TOP_RATIO) * FIELD_HEIGHT);
       Point currPos = new Point(START_X, START_Y);
       for (int i = 0; i < rowCnt; i++) {
 	    for (int j = 0; j < columnCnt; j++) {
@@ -519,8 +548,8 @@ public void rebuild() {
 public void setRatio(float ratio) {
       if (ratio > 0.7f)
 	    ratio = 0.7f;
-      if (ratio < 0.2f)
-	    ratio = 0.2f;
+      if (ratio < 0.1f)
+	    ratio = 0.1f;
       FIELD_RATIO = ratio;
       MAX_TRAMPOLINES_ROW_CNT = RED_ZONE / TRAMPOLINE_HEIGHT; //todo: replace with more beautiful formula
       TABLE_HEIGHT = (int) (FIELD_HEIGHT * FIELD_RATIO);
@@ -541,16 +570,15 @@ public Optional<BrickBlock[]> getColumn(BrickBlock block) {
       return Optional.of(result);
 }
 
-public @NotNull BrickBlock[] getRow(BrickBlock block) {
-      int index = blockList.indexOf(block);
+public @NotNull BrickBlock[] getRow(int blockIndex) {
       BrickBlock[] result = new BrickBlock[0];
-      if (index != -1) {
-	    int row = index / this.columnCnt;
+      if (blockIndex != -1) {
+	    int row = blockIndex / this.columnCnt;
 	    result = new BrickBlock[this.columnCnt];
-	    index = row * this.columnCnt;
+	    blockIndex = row * this.columnCnt;
 	    for (int i = 0; i < result.length; i++) {
-		  result[i] = blockList.get(index);
-		  index += 1;
+		  result[i] = blockList.get(blockIndex);
+		  blockIndex += 1;
 	    }
       }
       return result;
@@ -589,14 +617,15 @@ private boolean isOutside(Ball player) {
 
 private boolean isOutside(Collider body) {
       final Point[] vertexes = new Point[]{
-	  new Point(0, FIELD_HEIGHT),
+	  new Point(0, (int) (FIELD_HEIGHT * (1.0f - FIELD_TOP_RATIO))),
 	  new Point(0, 0),
 	  new Point(FIELD_WIDTH, 0),
-	  new Point(FIELD_WIDTH, FIELD_HEIGHT)
+	  new Point(FIELD_WIDTH, (int) (FIELD_HEIGHT * (1.0f - FIELD_TOP_RATIO)))
       };
       int iVertex = 0;
       int side;
       boolean isOutside = false;
+
       for (side = LeftSide; !isOutside && side <= TopSide; side++) {
 	    isOutside = body.collides(vertexes[iVertex], vertexes[(iVertex + 1) % vertexes.length]);
 	    iVertex++;
@@ -618,44 +647,11 @@ private boolean isDestroyer(Ball player) {
 	    isDestroyer = brick.isVisible() && brick.collider().collides(body);
 	    if (isDestroyer) {
 		  bricks.add(new BrickCollision(brick, ((SquareCollider) brick.collider()).getAttackVector(body)));
-//		  var collision = new BonusCollision(brick, ((SquareCollider)body).getCollisionSide());
-//		  System.out.println(brick.getType());
 		  raiseBonus(brick, player);
-//		  collisions.add(collision);
 	    }
       }
-//      System.out.println(body.center());
-//      System.out.println(blockList.get(6).collider().center());
-//      if (isDestroyer) {
-//	    var brick = blockList.get(index - 1);
-//	    if (body.collides(brick.collider())) {
-//		  var side = ((SquareCollider) brick.collider()).getCollisionSide();
-//		  BlockCollision collision = new BlockCollision(brick, side);
-//		  setBlockCallback(collision, brick.getType());
-//		  lastHandle = collision;
-//	    }
-//      }
       lastHandle = bricks;
-
       return bricks.size() != 0;
-//      int column = body.center().x / this.ceilWidth;
-//      int row = (TABLE_HEIGHT - (body.center().y - RED_ZONE)) / this.ceilHeight;
-//      if (row >= rowCnt)
-//	    row -= 1;
-//      int index = row * this.columnCnt + column;
-//      boolean response = false;
-//      if (index < blockList.size()) {
-//	    var brick = blockList.get(index);
-//	    if (brick.isVisible() && body.collides(blockList.get(index).collider())) {
-//		  var side = ((SquareCollider) brick.collider()).getCollisionSide();
-//		  System.out.println(side);
-//		  BlockCollision collision = new BlockCollision(brick, side);
-//		  setBlockCallback(collision, brick.getType());
-//		  lastHandle = collision;
-//		  response = true;
-//	    }
-//      }
-//      return response;
 }
 
 private @Nullable Player.Id getCurrentPlayer() {
@@ -664,28 +660,21 @@ private @Nullable Player.Id getCurrentPlayer() {
 
 private void raiseBonus(@NotNull BrickBlock brick, @NotNull Ball ball) {
       if (brick.getType() != BrickBlock.Type.Invincible) {
-	    Function<Object, Object> callback = switch (brick.getType()) {
-		  case Killer -> (o) -> getRow(brick);
-		  case MultiTrampoline -> (Object count) -> {
-			this.setTrampolineCnt(getCurrentPlayer(), (Integer) count);
-			initAllTrampolines();
-			absorbAll();
-			return null;
-		  };
-		  case DamageBonus, Invincible -> (o) -> null;
-		  case MultiBall -> (o) -> ball;
+	    Object params = switch (brick.getType()) {
+		  case Killer -> blockList.indexOf(brick);
 		  default -> null;
 	    };
+	    assert params == null || ((Integer) params) != -1;
 	    int score = switch (brick.getType()) {
 		  case Plain -> MathUtils.random(1, 4);
 		  case DamageBonus -> MathUtils.random(-5, -3);
 		  case Killer -> 3;
 		  default -> 1;
 	    };
-	    FlyerBonus bonus = new FlyerBonus(textures.getFlyerBonus(brick.getType()), brick.getType(), score, callback);
+	    FlyerBonus bonus = new FlyerBonus(textures.getFlyerBonus(brick.getType()), brick.getType(), score, params);
 	    assert bonuses != null;
 	    var point = brick.getPos();
-	    bonus.setPos(point.x - 40, point.y - 25);
+	    bonus.setPos(point.x - 30, point.y - 25);
 	    bonuses.add(bonus);
       }
 }
