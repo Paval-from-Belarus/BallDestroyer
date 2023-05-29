@@ -10,6 +10,8 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.badlogic.gdx.math.MathUtils;
@@ -28,13 +30,30 @@ import static com.baller.game.Globals.*;
 
 public class GameField {
 public static class Properties extends AbstractSerializable<GameField> {
+      private static final class DummyPoint {
+	    private int x;
+	    private int y;
+
+	    private DummyPoint(int x, int y) {
+		  this.x = x;
+		  this.y = y;
+	    }
+
+	    @Override
+	    public String toString() {
+		  return "(x=" + x + ",y=" + y + ")";
+	    }
+
+      }
+
       private float ratio;
       private BrickBlock.Type[] blocks;
       private FlyerBonus.Properties[] bonuses;
+      private DummyPoint[] trampolines; //the positions of trampolines
 
       public Properties() {
-	    var patterns = List.of("Ratio=(.+)", "Blocks=\\[(.+)\\]", "Bonuses=\\[(.+)\\]");
-	    List<Consumer<String>> handlers = List.of(this::setRatio, this::setBlocks, this::setBonuses);
+	    var patterns = List.of("Ratio=(.+)", "Blocks=\\[(.+)\\]", "Bonuses=\\[(.+)\\]", "Trampolines=\\[(.+)\\]");
+	    List<Consumer<String>> handlers = List.of(this::setRatio, this::setBlocks, this::setBonuses, this::setTrampolines);
 	    addPatterns(patterns);
 	    addHandlers(handlers);
 	    setEmptyState(true);
@@ -43,10 +62,9 @@ public static class Properties extends AbstractSerializable<GameField> {
       private Properties(GameField field) {
 	    this();
 	    ratio = FIELD_RATIO;
-	    blocks = field.blockList.stream()
-			 .map(BrickBlock::getType)
-			 .toArray(BrickBlock.Type[]::new);
+	    blocks = field.blockList.stream().map(BrickBlock::getType).toArray(BrickBlock.Type[]::new);
 	    bonuses = field.bonuses.stream().map(FlyerBonus::getProperties).toArray(FlyerBonus.Properties[]::new);
+	    trampolines = field.trampolines.stream().map(Trampoline::getPos).map(point -> new DummyPoint(point.x, point.y)).toArray(DummyPoint[]::new);
 	    setEmptyState(false);
       }
 
@@ -54,7 +72,8 @@ public static class Properties extends AbstractSerializable<GameField> {
       public String serialize() {
 	    return "Ratio=" + String.format("%.3f", ratio) + "\n" +
 		       "Blocks=" + Arrays.toString(blocks) + "\n" +
-		       "Bonuses=" + Arrays.toString(Arrays.stream(bonuses).map(FlyerBonus.Properties::serialize).toArray()) + "\n";
+		       "Bonuses=" + Arrays.toString(Arrays.stream(bonuses).map(FlyerBonus.Properties::serialize).toArray()) + "\n" +
+		       "Trampolines=" + Arrays.toString(trampolines) + "\n";
       }
 
       @Override
@@ -64,6 +83,13 @@ public static class Properties extends AbstractSerializable<GameField> {
 	    field.blockTypes = blocks;
 	    List<FlyerBonus> bonuses = Arrays.stream(this.bonuses).map(skeleton -> skeleton.construct(field.textures.getFlyerBonus(skeleton.type))).toList();
 	    field.bonuses.addAll(bonuses);
+	    field.trampolines = Arrays.stream(trampolines)
+				    .map(pos -> {
+					  var trampoline = new Trampoline(field.textures.getTrampoline());
+					  trampoline.setPos(pos.x, pos.y);
+					  trampoline.setState(DisplayObject.DisplayState.Super);
+					  return trampoline;
+				    }).collect(Collectors.toList());
 	    return field;
       }
 
@@ -77,6 +103,7 @@ public static class Properties extends AbstractSerializable<GameField> {
 			      .map(BrickBlock.Type::valueOf)
 			      .toArray(BrickBlock.Type[]::new);
       }
+
       private void setBonuses(String source) {
 	    String[] items = source.split(", +");
 	    bonuses = Arrays.stream(items).map(raw -> {
@@ -84,6 +111,19 @@ public static class Properties extends AbstractSerializable<GameField> {
 		  props.deserialize(raw);
 		  return props;
 	    }).toArray(FlyerBonus.Properties[]::new);
+      }
+
+      private void setTrampolines(String source) {
+	    List<DummyPoint> points = new ArrayList<>();
+	    Pattern pattern = Pattern.compile("\\(x=([0-9]+), *y=([0-9]+)\\)");
+	    Matcher matcher = pattern.matcher(source);
+	    while (matcher.find() && matcher.groupCount() == 2) {
+		  int x = Integer.parseInt(matcher.group(1));
+		  int y = Integer.parseInt(matcher.group(2));
+		  points.add(new DummyPoint(x, y));
+	    }
+	    this.trampolines = points.toArray(new DummyPoint[0]);
+
       }
 
       @Override
@@ -261,9 +301,11 @@ public boolean remove(@NotNull Player.Id player) {
 }
 
 private final List<FlyerBonus> removedBonuses = new ArrayList<>();
+
 public int getRestCounter() {
       return restBlockCnt;
 }
+
 public void update(float dt) {
       boolean isBlocked = false;
       int index;
@@ -291,7 +333,6 @@ public void update(float dt) {
 		  updateTrampoline(trampolines.get(i));
 	    }
       }
-
 }
 
 private void updateTrampoline(Trampoline trampoline) {
@@ -445,12 +486,25 @@ private int nextTrampolineHeight() {
 }
 
 private void initAllTrampolines() {
-      trampolines = new ArrayList<>();
-      resetTrampolineHeight();
-      for (Player.Id id : players) {
-	    var list = initTrampolines(id);
-	    if (list.size() > 0) {
-		  trampolines.addAll(list);
+      if (trampolines != null) {
+	    trampolines = trampolines.stream()
+			      .filter(DisplayObject::isSuper)
+			      .collect(Collectors.toList());
+	    trampolines.forEach(trampoline -> trampoline.setState(DisplayObject.DisplayState.Visible));
+	    assert players.size() == 1;
+	    for (Player.Id id : players) {
+		var trampolines = playerTrampolines.stream().filter(playerTrampolines -> playerTrampolines.belongs(id)).findFirst().get();
+		this.trampolines.forEach(trampolines::add);
+	    }
+      }
+      if (trampolines == null || trampolines.size() == 0) {
+	    trampolines = new ArrayList<>();
+	    resetTrampolineHeight();
+	    for (Player.Id id : players) {
+		  var list = initTrampolines(id);
+		  if (list.size() > 0) {
+			trampolines.addAll(list);
+		  }
 	    }
       }
 }
@@ -569,7 +623,9 @@ public Optional<BrickBlock[]> getColumn(BrickBlock block) {
       }
       return Optional.of(result);
 }
-
+private List<BrickBlock> getDynamicObjects() {
+      return blockList;
+}
 public @NotNull BrickBlock[] getRow(int blockIndex) {
       BrickBlock[] result = new BrickBlock[0];
       if (blockIndex != -1) {
@@ -604,8 +660,8 @@ private boolean isJumper(Ball player) {
       Collider ball = player.collider();
       boolean hasCollision = false;
       for (int i = 0; i < trampolines.size() && !hasCollision; i++) {
-	    Collider ramp = trampolines.get(i).collider();
-	    hasCollision = ball.collides(ramp);
+	    SquareCollider ramp = (SquareCollider) trampolines.get(i).collider();
+	    hasCollision = ball.collides(ramp) && ramp.getAttackVector(ball).y > 0.0f;
       }
       return hasCollision;
 
@@ -639,11 +695,12 @@ private boolean isDestroyer(Ball player) {
 //      if (body.center().y + < RED_ZONE)
 //	    return false;
       System.out.println(restBlockCnt);
+      List<BrickBlock> dynamics = getDynamicObjects();
       boolean isDestroyer;
       int index;
       List<BrickCollision> bricks = new ArrayList<>();
-      for (index = 0; index < blockList.size(); index++) {
-	    var brick = blockList.get(index);
+      for (index = 0; index < dynamics.size(); index++) {
+	    var brick = dynamics.get(index);
 	    isDestroyer = brick.isVisible() && brick.collider().collides(body);
 	    if (isDestroyer) {
 		  bricks.add(new BrickCollision(brick, ((SquareCollider) brick.collider()).getAttackVector(body)));

@@ -17,8 +17,8 @@ import java.util.regex.Pattern;
 
 
 public class Ball extends AnimatedObject {
-public static Vector2 DEFAULT_BALL_POS = new Vector2(280, 80f);
-public static int BALL_SIZE = 30;
+public static Vector2 DEFAULT_BALL_POS = new Vector2(280, 55f);
+public static int BALL_SIZE = 27;
 public static class Properties extends AbstractSerializable<Ball> {
       private Point pos;
       private Vector2 velocity;

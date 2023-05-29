@@ -1,7 +1,8 @@
 #Field's properties
-Ratio=0.700
-Blocks=[MultiTrampoline, Plain, DamageBonus, MultiBall, Invincible, Destroyed, Killer, Killer, DamageBonus, Plain, Destroyed, Killer, Invincible, Plain, Invincible, MultiTrampoline, MultiBall, Plain, Killer, Plain, Invincible, Killer, Invincible, Invincible, Killer, MultiBall, Plain, Plain, Plain, Killer, MultiTrampoline, Invincible, Plain, Plain, MultiBall, Invincible, Invincible, Destroyed, DamageBonus, Plain]
-Bonuses=[{Type=MultiTrampoline,Score=1,Params=null,Pos=(x=130,y=242)Velocity=(0.0,-86.0)}, {Type=MultiTrampoline,Score=1,Params=null,Pos=(x=130,y=204)Velocity=(0.0,-100.0)}]
+Ratio=0.600
+Blocks=[Destroyed, Destroyed, Invincible, Destroyed, Destroyed, Invincible, Plain, Invincible, Destroyed, Destroyed, Killer, Plain, Killer, Destroyed, Destroyed, MultiBall, Killer, Plain, Invincible, Destroyed, Invincible, Plain, Invincible, DamageBonus, Destroyed, Invincible, Destroyed, Invincible, Invincible, Destroyed, Destroyed, Destroyed, Destroyed, Invincible, Destroyed]
+Bonuses=[{Type=Killer,Score=3,Params=1,Pos=(x=230,y=239)Velocity=(0.0,-59.0)}, {Type=Plain,Score=2,Params=null,Pos=(x=140,y=282)Velocity=(0.0,-50.0)}]
+Trampolines=[(x=90,y=40), (x=410,y=40)]
 
 #Players' properties
 ##Name mapping
@@ -12,29 +13,31 @@ Ignat=>2
 ##Players' configuration
 ###Player
 Id=0
-Score=0
-TrampolineCnt=1
-Balls=[{Pos=(x=46,y=366),Velocity=(160.0,-280.0),Radius=15.000}]
+Score=17
+TrampolineCnt=2
+Balls=[{Pos=(x=95,y=353),Velocity=(-104.0,182.0),Radius=13.500}, {Pos=(x=268,y=402),Velocity=(-104.0,-182.0),Radius=13.500}]
 ###Player
 Id=1
 Score=0
 TrampolineCnt=1
-Balls=[{Pos=(x=295,y=95),Velocity=(-160.0,280.0),Radius=15.000}]
+Balls=[{Pos=(x=293,y=93),Velocity=(-104.0,182.0),Radius=13.500}]
 ###Player
 Id=2
 Score=0
 TrampolineCnt=1
-Balls=[{Pos=(x=295,y=95),Velocity=(-160.0,280.0),Radius=15.000}]
+Balls=[{Pos=(x=293,y=93),Velocity=(-104.0,182.0),Radius=13.500}]
 
 #Settings
 Resolution=Full
-Hardness=Master
-LuckyLevel=1.0
+Hardness=Veteran
+LuckyLevel=0.66
 SkinName=White
 
-#Statistics[John=>29]
-[John=>28]
-[John=>5]
-[John=>27]
-[John=>23]
-#Elapsed time:(2679)
+#Statistics[John=>54]
+[John=>60]
+[John=>2]
+[John=>7]
+[John=>4]
+[John=>0]
+[John=>36]
+#Elapsed time:(18515)

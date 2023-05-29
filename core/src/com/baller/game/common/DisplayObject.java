@@ -8,7 +8,7 @@ import com.baller.game.Globals;
 import java.awt.*;
 
 public abstract class DisplayObject {
-public enum DisplayState {Visible, Hidden, Disabled, Static, Forced}
+public enum DisplayState {Visible, Hidden, Disabled, Static, Forced, Super}
 
 protected Sprite spriteBack;
 protected int width;
@@ -70,7 +70,9 @@ public void setAlpha(float alpha) {
       if (spriteBack != null)
 	    spriteBack.setAlpha(alpha);
 }
-
+public boolean isSuper() {
+      return state == DisplayState.Super;
+}
 private void adjust(int width, int height) {
       if (spriteBack == null)
 	    return;

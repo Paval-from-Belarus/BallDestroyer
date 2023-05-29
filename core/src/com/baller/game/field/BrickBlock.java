@@ -24,7 +24,7 @@ public enum Type {
             Invincible.weight = 5;
             DamageBonus.weight = 3;
             Killer.weight = 4;
-            MultiBall.weight = 5;//2;
+            MultiBall.weight = 2;
             MultiTrampoline.weight = 2;
             SUM_WEIGHT = Arrays.stream(values()).map(v -> v.weight).reduce(0, Integer::sum);
       }
